@@ -12,14 +12,17 @@ use super::{
     context_files::ContextFilesComponent, message_input::MessageInputComponent, DrawableComponent,
 };
 
-pub struct ShortcutsComponent<'a> {
+pub struct ShortcutsComponent {
     pub focused_block: FocusedBlock,
-    pub shortcuts: Vec<(&'a str, &'a str)>,
 }
 
-impl<'a> ShortcutsComponent<'a> {
+impl ShortcutsComponent {
     pub fn from_focused_block(focused_block: FocusedBlock) -> Result<Self> {
-        let shortcuts = match &focused_block {
+        Ok(Self { focused_block })
+    }
+
+    fn get_shortcuts(&self) -> Vec<(&str, &str)> {
+        match self.focused_block {
             FocusedBlock::Home => vec![
                 ("i", "create mission"),
                 ("c", "context"),
@@ -28,12 +31,9 @@ impl<'a> ShortcutsComponent<'a> {
                 ("s", "settings"),
                 ("h", "help"),
             ],
+            FocusedBlock::Message => vec![("Esc", "exit"), ("Enter", "send")],
             _ => vec![],
-        };
-        Ok(Self {
-            focused_block,
-            shortcuts,
-        })
+        }
     }
 
     // true = should exit
@@ -43,9 +43,6 @@ impl<'a> ShortcutsComponent<'a> {
         context_files: &mut ContextFilesComponent,
     ) -> Result<bool> {
         if let Event::Key(key) = event::read()? {
-            if let KeyCode::Char('q') = key.code {
-                return Ok(true);
-            }
             if let KeyCode::Esc = key.code {
                 self.focused_block = FocusedBlock::Home;
                 message.set_focus(false);
@@ -53,19 +50,24 @@ impl<'a> ShortcutsComponent<'a> {
             }
 
             match self.focused_block {
-                FocusedBlock::Home | FocusedBlock::Actions | FocusedBlock::ContextFiles => {
+                FocusedBlock::Message => {}
+                _ => {
                     if let KeyCode::Char('c') = key.code {
                         self.focused_block = FocusedBlock::ContextFiles;
                         message.set_focus(false);
                         context_files.set_focus(true);
+                        return Ok(false);
                     }
                     if let KeyCode::Char('i') = key.code {
                         self.focused_block = FocusedBlock::Message;
                         message.set_focus(true);
                         context_files.set_focus(false);
+                        return Ok(false);
+                    }
+                    if let KeyCode::Char('q') = key.code {
+                        return Ok(true);
                     }
                 }
-                _ => {}
             };
 
             match self.focused_block {
@@ -78,6 +80,14 @@ impl<'a> ShortcutsComponent<'a> {
                         context_files.select_next();
                     }
                 }
+                FocusedBlock::Message => {
+                    // if the char is writtable, call message.append_char
+                    if let KeyCode::Char(key) = key.code {
+                        if key.is_ascii() && !key.is_control() {
+                            message.append_char(key);
+                        }
+                    }
+                }
                 _ => {}
             }
         }
@@ -85,10 +95,10 @@ impl<'a> ShortcutsComponent<'a> {
     }
 }
 
-impl<'a> DrawableComponent for ShortcutsComponent<'a> {
+impl DrawableComponent for ShortcutsComponent {
     fn draw<B: Backend>(&mut self, f: &mut Frame<B>, rect: Rect) -> Result<()> {
         let shortcuts = self
-            .shortcuts
+            .get_shortcuts()
             .iter()
             .map(|(key, action)| format!("{}) {}", key, action))
             .collect::<Vec<String>>()

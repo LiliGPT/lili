@@ -58,6 +58,10 @@ impl ContextFilesComponent {
     pub fn set_focus(&mut self, focused: bool) {
         self.focused = focused;
     }
+
+    pub fn height(&mut self) -> u16 {
+        self.items.len() + 2
+    }
 }
 
 impl DrawableComponent for ContextFilesComponent {

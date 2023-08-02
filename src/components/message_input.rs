@@ -1,7 +1,8 @@
 use anyhow::Result;
 use ratatui::{
-    prelude::{Backend, Rect},
-    widgets::{Block, Borders},
+    prelude::{Backend, Constraint, Rect},
+    style::Stylize,
+    widgets::{Block, Borders, Wrap},
     Frame,
 };
 
@@ -23,19 +24,19 @@ impl MessageInputComponent {
     pub fn set_focus(&mut self, focused: bool) {
         self.focused = focused;
     }
+
+    pub fn append_char(&mut self, key: char) {
+        self.message.push(key);
+    }
 }
 
 impl DrawableComponent for MessageInputComponent {
     fn draw<B: Backend>(&mut self, f: &mut Frame<B>, rect: Rect) -> Result<()> {
-        // let block = Block::default().borders(Borders::ALL).title("Message");
-        // f.render_widget(block, rect);
-
         let mut block = Block::default().borders(Borders::ALL).title("Message");
 
         let mut message = ratatui::widgets::Paragraph::new(self.message.as_str())
-            .alignment(ratatui::prelude::Alignment::Left);
-
-        // let mut input = TextArea::default();
+            .alignment(ratatui::prelude::Alignment::Left)
+            .wrap(Wrap { trim: true });
 
         if self.focused {
             block = block
@@ -43,9 +44,8 @@ impl DrawableComponent for MessageInputComponent {
         }
 
         message = message.block(block);
-        f.render_widget(message, rect);
 
-        // input.set_block(block);
+        f.render_widget(message, rect);
 
         Ok(())
     }

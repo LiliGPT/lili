@@ -26,4 +26,8 @@ impl BatchList {
     pub fn add_item(&mut self, item: &str) {
         self.items.push(item.to_string());
     }
+
+    pub fn len(&self) -> u16 {
+        self.items.len() as u16
+    }
 }

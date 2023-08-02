@@ -16,13 +16,13 @@ use crate::components::{
     message_input::MessageInputComponent, shortcuts::ShortcutsComponent, DrawableComponent,
 };
 
-pub struct App<'a> {
+pub struct App {
     focused_block: FocusedBlock,
     pub el_message: MessageInputComponent,
     el_header: HeaderComponent,
     pub el_context_files: ContextFilesComponent,
     el_actions: ActionsComponent,
-    el_shortcuts: ShortcutsComponent<'a>,
+    el_shortcuts: ShortcutsComponent,
 }
 
 #[derive(Debug, PartialEq, Default, Clone)]
@@ -34,7 +34,7 @@ pub enum FocusedBlock {
     Actions,
 }
 
-impl<'a> App<'a> {
+impl App {
     pub fn new() -> Result<Self> {
         let focused_block = FocusedBlock::default();
         let el_message = MessageInputComponent::new()?;
@@ -81,9 +81,9 @@ impl<'a> App<'a> {
         let [left_top_rect, left_mid_rect, left_bottom_rect] = *Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Ratio(3, 12),
-                Constraint::Ratio(4, 12),
-                Constraint::Ratio(5, 12),
+                Constraint::Min(5),
+                Constraint::Length(self.el_context_files.height()),
+                Constraint::Length(5),
             ].as_ref())
             .split(left_rect)
             else {
