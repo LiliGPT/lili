@@ -2,6 +2,7 @@ use anyhow::Result;
 use crossterm::event::{self, Event, KeyCode};
 use ratatui::{
     prelude::{Alignment, Backend, Rect},
+    text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
     Frame,
 };
@@ -9,7 +10,10 @@ use ratatui::{
 use crate::app::FocusedBlock;
 
 use super::{
-    context_files::ContextFilesComponent, message_input::MessageInputComponent, DrawableComponent,
+    context_files::ContextFilesComponent,
+    header::{HeaderComponent, HeaderStatus},
+    message_input::MessageInputComponent,
+    DrawableComponent,
 };
 
 pub struct ShortcutsComponent {
@@ -39,6 +43,7 @@ impl ShortcutsComponent {
     // true = should exit
     pub fn handle_events(
         &mut self,
+        header: &mut HeaderComponent,
         message: &mut MessageInputComponent,
         context_files: &mut ContextFilesComponent,
     ) -> Result<bool> {
@@ -87,6 +92,17 @@ impl ShortcutsComponent {
                             message.append_char(key);
                         }
                     }
+                    // if is Enter
+                    if let KeyCode::Enter = key.code {
+                        // send message
+                        // clear message
+                        // message.clear();
+                        if header.get_status() == HeaderStatus::Idle {
+                            header.set_status(HeaderStatus::Loading);
+                        } else {
+                            header.set_status(HeaderStatus::Idle);
+                        }
+                    }
                 }
                 _ => {}
             }
@@ -97,17 +113,30 @@ impl ShortcutsComponent {
 
 impl DrawableComponent for ShortcutsComponent {
     fn draw<B: Backend>(&mut self, f: &mut Frame<B>, rect: Rect) -> Result<()> {
-        let shortcuts = self
-            .get_shortcuts()
-            .iter()
-            .map(|(key, action)| format!("{}) {}", key, action))
-            .collect::<Vec<String>>()
-            .join("      ");
+        // let shortcuts = self
+        //     .get_shortcuts()
+        //     .iter()
+        //     .map(|(key, action)| format!("{}) {}", key, action))
+        //     .collect::<Vec<String>>()
+        //     .join("      ");
+        let mut innerp: Vec<Span> = vec![];
 
-        let shortcuts = Paragraph::new(shortcuts.as_str())
+        self.get_shortcuts().iter().for_each(|(key, action)| {
+            innerp.push(Span::styled(
+                format!("{}", key),
+                ratatui::style::Style::default().fg(ratatui::style::Color::White),
+            ));
+            innerp.push(Span::styled(
+                format!(" {}", action),
+                ratatui::style::Style::default().fg(ratatui::style::Color::DarkGray),
+            ));
+            innerp.push(Span::raw("      "));
+        });
+
+        let paragraph = Paragraph::new(Line::from(innerp))
             .block(Block::default().borders(Borders::NONE))
             .alignment(Alignment::Left);
-        f.render_widget(shortcuts, rect);
+        f.render_widget(paragraph, rect);
         Ok(())
     }
 }

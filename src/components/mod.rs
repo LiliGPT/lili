@@ -8,6 +8,7 @@ pub mod actions;
 pub mod context_files;
 pub mod header;
 pub mod message_input;
+pub mod project_info;
 pub mod shortcuts;
 
 pub trait DrawableComponent {

@@ -13,7 +13,8 @@ use ratatui::{
 
 use crate::components::{
     actions::ActionsComponent, context_files::ContextFilesComponent, header::HeaderComponent,
-    message_input::MessageInputComponent, shortcuts::ShortcutsComponent, DrawableComponent,
+    message_input::MessageInputComponent, project_info::ProjectInfoComponent,
+    shortcuts::ShortcutsComponent, DrawableComponent,
 };
 
 pub struct App {
@@ -23,6 +24,7 @@ pub struct App {
     pub el_context_files: ContextFilesComponent,
     el_actions: ActionsComponent,
     el_shortcuts: ShortcutsComponent,
+    el_project_info: ProjectInfoComponent,
 }
 
 #[derive(Debug, PartialEq, Default, Clone)]
@@ -35,13 +37,14 @@ pub enum FocusedBlock {
 }
 
 impl App {
-    pub fn new() -> Result<Self> {
+    pub fn new(project_dir: String) -> Result<Self> {
         let focused_block = FocusedBlock::default();
         let el_message = MessageInputComponent::new()?;
         let el_header = HeaderComponent::new("Mission Control".to_string())?;
         let el_context_files = ContextFilesComponent::new()?;
         let el_actions = ActionsComponent::new()?;
         let el_shortcuts = ShortcutsComponent::from_focused_block(focused_block.clone())?;
+        let el_project_info = ProjectInfoComponent::new(project_dir)?;
         Ok(Self {
             focused_block,
             el_message,
@@ -49,6 +52,7 @@ impl App {
             el_context_files,
             el_actions,
             el_shortcuts,
+            el_project_info,
         })
     }
 
@@ -95,13 +99,17 @@ impl App {
         self.el_context_files.draw(frame, left_mid_rect)?;
         self.el_actions.draw(frame, left_bottom_rect)?;
         self.el_shortcuts.draw(frame, bottom_rect)?;
+        self.el_project_info.draw(frame, right_rect)?;
 
         Ok(())
     }
 
     // true = should exit
     pub fn handle_events(&mut self) -> Result<bool> {
-        self.el_shortcuts
-            .handle_events(&mut self.el_message, &mut self.el_context_files)
+        self.el_shortcuts.handle_events(
+            &mut self.el_header,
+            &mut self.el_message,
+            &mut self.el_context_files,
+        )
     }
 }

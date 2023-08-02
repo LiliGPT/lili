@@ -21,8 +21,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
+    // if the cli was called with an argument, then use that as the project_dir
+    let project_dir = match std::env::args().nth(1) {
+        Some(arg) => arg,
+        // otherwise the project_dir is the current dir that user called this program
+        None => std::env::current_dir()?.to_str().unwrap().to_string(),
+    };
     // create app and run it
-    let mut app = App::new()?;
+    let mut app = App::new(project_dir)?;
     let res = run_app(&mut terminal, &mut app);
 
     // restore terminal
