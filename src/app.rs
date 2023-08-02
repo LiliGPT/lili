@@ -1,6 +1,10 @@
-use std::cell::{Cell, RefCell};
+use std::{
+    cell::{Cell, RefCell},
+    default,
+};
 
 use anyhow::Result;
+use crossterm::event::{self, Event, KeyCode};
 use ratatui::{
     prelude::{Backend, Constraint, Direction, Layout},
     widgets::{Block, Borders, ListState, Paragraph},
@@ -13,6 +17,7 @@ use crate::components::{
 };
 
 pub struct App<'a> {
+    focused_block: FocusedBlock,
     pub el_message: MessageInputComponent,
     el_header: HeaderComponent,
     pub el_context_files: ContextFilesComponent,
@@ -20,26 +25,25 @@ pub struct App<'a> {
     el_shortcuts: ShortcutsComponent<'a>,
 }
 
-#[derive(Default)]
-pub struct AppState {
-    pub message: String,
+#[derive(Debug, PartialEq, Default, Clone)]
+pub enum FocusedBlock {
+    #[default]
+    Home,
+    Message,
+    ContextFiles,
+    Actions,
 }
 
 impl<'a> App<'a> {
     pub fn new() -> Result<Self> {
+        let focused_block = FocusedBlock::default();
         let el_message = MessageInputComponent::new()?;
         let el_header = HeaderComponent::new("Mission Control".to_string())?;
         let el_context_files = ContextFilesComponent::new()?;
         let el_actions = ActionsComponent::new()?;
-        let el_shortcuts = ShortcutsComponent::new(vec![
-            ("i", "create mission"),
-            ("c", "context"),
-            ("r", "reset"),
-            ("g", "git"),
-            ("s", "settings"),
-            ("h", "help"),
-        ])?;
+        let el_shortcuts = ShortcutsComponent::from_focused_block(focused_block.clone())?;
         Ok(Self {
+            focused_block,
             el_message,
             el_header,
             el_context_files,
@@ -93,5 +97,11 @@ impl<'a> App<'a> {
         self.el_shortcuts.draw(frame, bottom_rect)?;
 
         Ok(())
+    }
+
+    // true = should exit
+    pub fn handle_events(&mut self) -> Result<bool> {
+        self.el_shortcuts
+            .handle_events(&mut self.el_message, &mut self.el_context_files)
     }
 }

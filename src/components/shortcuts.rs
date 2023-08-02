@@ -1,19 +1,87 @@
 use anyhow::Result;
+use crossterm::event::{self, Event, KeyCode};
 use ratatui::{
     prelude::{Alignment, Backend, Rect},
     widgets::{Block, Borders, Paragraph},
     Frame,
 };
 
-use super::DrawableComponent;
+use crate::app::FocusedBlock;
+
+use super::{
+    context_files::ContextFilesComponent, message_input::MessageInputComponent, DrawableComponent,
+};
 
 pub struct ShortcutsComponent<'a> {
+    pub focused_block: FocusedBlock,
     pub shortcuts: Vec<(&'a str, &'a str)>,
 }
 
 impl<'a> ShortcutsComponent<'a> {
-    pub fn new(shortcuts: Vec<(&'a str, &'a str)>) -> Result<Self> {
-        Ok(Self { shortcuts })
+    pub fn from_focused_block(focused_block: FocusedBlock) -> Result<Self> {
+        let shortcuts = match &focused_block {
+            FocusedBlock::Home => vec![
+                ("i", "create mission"),
+                ("c", "context"),
+                ("r", "reset"),
+                ("g", "git"),
+                ("s", "settings"),
+                ("h", "help"),
+            ],
+            _ => vec![],
+        };
+        Ok(Self {
+            focused_block,
+            shortcuts,
+        })
+    }
+
+    // true = should exit
+    pub fn handle_events(
+        &mut self,
+        message: &mut MessageInputComponent,
+        context_files: &mut ContextFilesComponent,
+    ) -> Result<bool> {
+        if let Event::Key(key) = event::read()? {
+            if let KeyCode::Char('q') = key.code {
+                return Ok(true);
+            }
+            if let KeyCode::Esc = key.code {
+                self.focused_block = FocusedBlock::Home;
+                message.set_focus(false);
+                context_files.set_focus(false);
+            }
+
+            match self.focused_block {
+                FocusedBlock::Home | FocusedBlock::Actions | FocusedBlock::ContextFiles => {
+                    if let KeyCode::Char('c') = key.code {
+                        self.focused_block = FocusedBlock::ContextFiles;
+                        message.set_focus(false);
+                        context_files.set_focus(true);
+                    }
+                    if let KeyCode::Char('i') = key.code {
+                        self.focused_block = FocusedBlock::Message;
+                        message.set_focus(true);
+                        context_files.set_focus(false);
+                    }
+                }
+                _ => {}
+            };
+
+            match self.focused_block {
+                FocusedBlock::Home => {}
+                FocusedBlock::ContextFiles => {
+                    if let KeyCode::Up = key.code {
+                        context_files.select_previous();
+                    }
+                    if let KeyCode::Down = key.code {
+                        context_files.select_next();
+                    }
+                }
+                _ => {}
+            }
+        }
+        Ok(false)
     }
 }
 

@@ -47,27 +47,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<()> 
             app.draw(f).unwrap();
         })?;
 
-        if let Event::Key(key) = event::read()? {
-            let context_files = &mut app.el_context_files;
-            let message = &mut app.el_message;
-
-            if let KeyCode::Char('q') = key.code {
-                return Ok(());
-            }
-            if let KeyCode::Char('c') = key.code {
-                message.set_focus(false);
-                context_files.set_focus(true);
-            }
-            if let KeyCode::Char('i') = key.code {
-                message.set_focus(true);
-                context_files.set_focus(false);
-            }
-            if let KeyCode::Up = key.code {
-                context_files.select_previous();
-            }
-            if let KeyCode::Down = key.code {
-                context_files.select_next();
-            }
+        match app.handle_events()? {
+            true => return Ok(()),
+            false => continue,
         }
     }
 }

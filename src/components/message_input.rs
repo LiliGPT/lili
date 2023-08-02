@@ -35,14 +35,17 @@ impl DrawableComponent for MessageInputComponent {
         let mut message = ratatui::widgets::Paragraph::new(self.message.as_str())
             .alignment(ratatui::prelude::Alignment::Left);
 
+        // let mut input = TextArea::default();
+
         if self.focused {
             block = block
                 .border_style(ratatui::style::Style::default().fg(ratatui::style::Color::Cyan));
         }
 
         message = message.block(block);
-
         f.render_widget(message, rect);
+
+        // input.set_block(block);
 
         Ok(())
     }
