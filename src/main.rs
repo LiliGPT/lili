@@ -5,7 +5,7 @@ mod utils;
 use std::{error::Error, io};
 
 use anyhow::Result;
-use app::App;
+use app::{App, AppState};
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -28,7 +28,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         None => std::env::current_dir()?.to_str().unwrap().to_string(),
     };
     // create app and run it
-    let mut app = App::new(project_dir)?;
+    let state: &'static mut AppState = Box::leak(Box::new(AppState::new(project_dir)?));
+    let mut app = App::new(state)?;
     let res = run_app(&mut terminal, &mut app);
 
     // restore terminal

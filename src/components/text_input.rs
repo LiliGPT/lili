@@ -1,38 +1,36 @@
 use anyhow::Result;
-use ratatui::{
-    prelude::{Backend, Constraint, Rect},
-    style::Stylize,
-    widgets::{Block, Borders, Wrap},
-    Frame,
-};
 
 use super::{DrawableComponent, InputComponent};
 
-pub struct MessageInputComponent {
+pub struct TextInputComponent {
     focused: bool,
     value: String,
+    label: String,
 }
 
-impl MessageInputComponent {
-    pub fn new() -> Result<Self> {
+impl TextInputComponent {
+    pub fn new(label: &str) -> Result<Self> {
         Ok(Self {
             focused: false,
             value: String::new(),
+            label: label.to_string(),
         })
-    }
-
-    pub fn set_focus(&mut self, focused: bool) {
-        self.focused = focused;
     }
 }
 
-impl DrawableComponent for MessageInputComponent {
-    fn draw<B: Backend>(&mut self, f: &mut Frame<B>, rect: Rect) -> Result<()> {
-        let mut block = Block::default().borders(Borders::ALL).title("Message");
+impl DrawableComponent for TextInputComponent {
+    fn draw<B: ratatui::prelude::Backend>(
+        &mut self,
+        f: &mut ratatui::Frame<B>,
+        rect: ratatui::prelude::Rect,
+    ) -> anyhow::Result<()> {
+        let mut block = ratatui::widgets::Block::default()
+            .borders(ratatui::widgets::Borders::ALL)
+            .title(self.label.clone());
 
         let mut message = ratatui::widgets::Paragraph::new(self.value.as_str())
             .alignment(ratatui::prelude::Alignment::Left)
-            .wrap(Wrap { trim: true });
+            .wrap(ratatui::widgets::Wrap { trim: true });
 
         if self.focused {
             block = block
@@ -47,7 +45,7 @@ impl DrawableComponent for MessageInputComponent {
     }
 }
 
-impl InputComponent for MessageInputComponent {
+impl InputComponent for TextInputComponent {
     fn set_focus(&mut self, focused: bool) {
         self.focused = focused;
     }

@@ -7,6 +7,8 @@ use ratatui::{
     Frame,
 };
 
+use crate::app::AppState;
+
 use super::DrawableComponent;
 
 pub struct ProjectInfoComponent {
@@ -28,7 +30,7 @@ impl DrawableComponent for ProjectInfoComponent {
         let pathinfo = code_analyst::get_path_info(&self.project_dir).unwrap_or_default();
         let project_dir_line = Line::from(vec![Span::raw(format!(
             "Project Dir: {}",
-            self.project_dir
+            self.project_dir,
         ))]);
         let language_line = Line::from(vec![Span::raw(format!(
             "Language: {}",

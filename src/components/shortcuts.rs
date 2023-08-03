@@ -13,11 +13,23 @@ use super::{
     context_files::ContextFilesComponent,
     header::{HeaderComponent, HeaderStatus},
     message_input::MessageInputComponent,
-    DrawableComponent,
+    DrawableComponent, InputComponent,
 };
 
 pub struct ShortcutsComponent {
     pub focused_block: FocusedBlock,
+}
+
+pub enum ShortcutHandlerResponse {
+    Exit,
+    Continue,
+    Login,
+    Mission,
+    FocusMessage,
+    FocusContext,
+    FocusSignInUsername,
+    FocusSignInPassword,
+    FocusSignInButton,
 }
 
 impl ShortcutsComponent {
@@ -40,42 +52,50 @@ impl ShortcutsComponent {
         }
     }
 
-    // true = should exit
     pub fn handle_events(
         &mut self,
+        signed_in: bool,
+        focused_block: FocusedBlock,
         header: &mut HeaderComponent,
         message: &mut MessageInputComponent,
         context_files: &mut ContextFilesComponent,
-    ) -> Result<bool> {
+        username: &mut impl InputComponent,
+        password: &mut impl InputComponent,
+    ) -> Result<ShortcutHandlerResponse> {
         if let Event::Key(key) = event::read()? {
             if let KeyCode::Esc = key.code {
-                self.focused_block = FocusedBlock::Home;
                 message.set_focus(false);
                 context_files.set_focus(false);
+                return Ok(ShortcutHandlerResponse::Mission);
             }
 
-            match self.focused_block {
-                FocusedBlock::Message => {}
-                _ => {
-                    if let KeyCode::Char('c') = key.code {
-                        self.focused_block = FocusedBlock::ContextFiles;
-                        message.set_focus(false);
-                        context_files.set_focus(true);
-                        return Ok(false);
-                    }
-                    if let KeyCode::Char('i') = key.code {
-                        self.focused_block = FocusedBlock::Message;
-                        message.set_focus(true);
-                        context_files.set_focus(false);
-                        return Ok(false);
-                    }
-                    if let KeyCode::Char('q') = key.code {
-                        return Ok(true);
-                    }
-                }
-            };
+            let input_components = vec![
+                FocusedBlock::Message,
+                FocusedBlock::UsernameInput,
+                FocusedBlock::PasswordInput,
+            ];
 
-            match self.focused_block {
+            let is_input = &input_components.contains(&focused_block);
+
+            if !is_input {
+                if let KeyCode::Char('c') = key.code {
+                    return Ok(ShortcutHandlerResponse::FocusContext);
+                }
+                if let KeyCode::Char('i') = key.code {
+                    return Ok(ShortcutHandlerResponse::FocusMessage);
+                }
+                if let KeyCode::Char('q') = key.code {
+                    return Ok(ShortcutHandlerResponse::Exit);
+                }
+                if let KeyCode::Char('l') = key.code {
+                    return Ok(ShortcutHandlerResponse::Login);
+                }
+                if let KeyCode::Char('m') = key.code {
+                    return Ok(ShortcutHandlerResponse::Mission);
+                }
+            }
+
+            match focused_block {
                 FocusedBlock::Home => {}
                 FocusedBlock::ContextFiles => {
                     if let KeyCode::Up = key.code {
@@ -86,29 +106,76 @@ impl ShortcutsComponent {
                     }
                 }
                 FocusedBlock::Message => {
-                    // if the char is writtable, call message.append_char
-                    if let KeyCode::Char(key) = key.code {
-                        if key.is_ascii() && !key.is_control() {
-                            message.append_char(key);
-                        }
-                    }
                     // if is Enter
                     if let KeyCode::Enter = key.code {
-                        // send message
+                        // todo: send message
                         // clear message
                         // message.clear();
                         if header.get_status() == HeaderStatus::Idle {
-                            header.set_status(HeaderStatus::Loading);
+                            // header.set_status(HeaderStatus::Loading);
+                            if !signed_in {
+                                return Ok(ShortcutHandlerResponse::Login);
+                            }
                         } else {
                             header.set_status(HeaderStatus::Idle);
                         }
+                    }
+                    return handle_input_events(key, message);
+                }
+                FocusedBlock::UsernameInput => {
+                    let nextkeys = vec![KeyCode::Enter, KeyCode::Tab];
+                    if nextkeys.contains(&key.code) {
+                        return Ok(ShortcutHandlerResponse::FocusSignInPassword);
+                    }
+                    return handle_input_events(key, username);
+                }
+                FocusedBlock::PasswordInput => {
+                    let nextkeys = vec![KeyCode::Enter, KeyCode::Tab];
+                    if nextkeys.contains(&key.code) {
+                        return Ok(ShortcutHandlerResponse::FocusSignInButton);
+                    }
+                    if key.code == KeyCode::BackTab {
+                        return Ok(ShortcutHandlerResponse::FocusSignInUsername);
+                    }
+                    return handle_input_events(key, password);
+                }
+                FocusedBlock::SignInButton => {
+                    let nextkeys = vec![KeyCode::Enter, KeyCode::Tab];
+                    if nextkeys.contains(&key.code) {
+                        // todo: submit
+                        return Ok(ShortcutHandlerResponse::Login);
+                    }
+                    if key.code == KeyCode::BackTab {
+                        return Ok(ShortcutHandlerResponse::FocusSignInPassword);
                     }
                 }
                 _ => {}
             }
         }
-        Ok(false)
+        Ok(ShortcutHandlerResponse::Continue)
     }
+}
+
+fn handle_input_events(
+    key: crossterm::event::KeyEvent,
+    input: &mut impl InputComponent,
+) -> Result<ShortcutHandlerResponse> {
+    // if the char is writtable, call message.append_char
+    if let KeyCode::Char(key) = key.code {
+        if key.is_ascii() && !key.is_control() {
+            let new_value = format!("{}{}", input.value(), key);
+            input.set_value(new_value);
+            return Ok(ShortcutHandlerResponse::Continue);
+        }
+    }
+    if let KeyCode::Backspace = key.code {
+        let value = &input.value();
+        if value.len() > 0 {
+            input.set_value(value[..value.len() - 1].to_string());
+            return Ok(ShortcutHandlerResponse::Continue);
+        }
+    }
+    Ok(ShortcutHandlerResponse::Continue)
 }
 
 impl DrawableComponent for ShortcutsComponent {
