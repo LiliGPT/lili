@@ -1,13 +1,6 @@
-use std::{
-    cell::{Cell, RefCell},
-    default,
-};
-
 use anyhow::Result;
-use crossterm::event::{self, Event, KeyCode};
 use ratatui::{
     prelude::{Backend, Constraint, Direction, Layout},
-    widgets::{Block, Borders, ListState, Paragraph},
     Frame,
 };
 

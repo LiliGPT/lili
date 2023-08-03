@@ -1,5 +1,6 @@
 mod app;
 mod components;
+mod pages;
 mod utils;
 
 use std::{error::Error, io};
@@ -7,7 +8,7 @@ use std::{error::Error, io};
 use anyhow::Result;
 use app::{App, AppState};
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    event::{DisableMouseCapture, EnableMouseCapture},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
