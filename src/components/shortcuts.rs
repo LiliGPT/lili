@@ -8,36 +8,50 @@ use ratatui::{
     Frame,
 };
 
-use crate::app::{AppState, FocusedBlock};
+use crate::app::{AppScreen, AppState, FocusedBlock};
 
 use super::{AppComponent, DrawableComponent};
 
-pub struct ShortcutsComponent {
-    pub focused_block: FocusedBlock,
-}
+pub struct ShortcutsComponent {}
 
 impl ShortcutsComponent {
-    pub fn from_focused_block(focused_block: FocusedBlock) -> Result<Self> {
-        Ok(Self { focused_block })
+    pub fn new() -> Result<Self> {
+        Ok(Self {})
     }
 
     pub fn as_mutex(self) -> Mutex<AppComponent> {
         Mutex::new(AppComponent::Shortcuts(self))
     }
 
-    fn get_shortcuts(&self) -> Vec<(&str, &str)> {
-        match self.focused_block {
-            FocusedBlock::Home => vec![
-                ("i", "create mission"),
-                ("c", "context"),
-                ("r", "reset"),
-                ("g", "git"),
-                ("s", "settings"),
-                ("h", "help"),
-            ],
-            FocusedBlock::Message => vec![("Esc", "exit"), ("Enter", "send")],
-            _ => vec![],
+    fn get_shortcuts(&self, screen: &AppScreen, focused_block: &FocusedBlock) -> Vec<(&str, &str)> {
+        match focused_block {
+            FocusedBlock::Home => {
+                return vec![
+                    ("i", "create mission"),
+                    ("c", "context"),
+                    ("r", "reset"),
+                    ("g", "git"),
+                    ("s", "settings"),
+                    ("h", "help"),
+                ]
+            }
+            FocusedBlock::Message => return vec![("Esc", "exit"), ("Enter", "send")],
+            _ => {}
         }
+
+        match screen {
+            AppScreen::SignIn => {
+                return vec![
+                    ("Esc", "exit"),
+                    ("Tab", "next field"),
+                    ("Shift+Tab", "previous field"),
+                    ("Enter", "submit"),
+                ]
+            }
+            _ => {}
+        }
+
+        vec![]
     }
 }
 
@@ -56,17 +70,19 @@ impl DrawableComponent for ShortcutsComponent {
         //     .join("      ");
         let mut innerp: Vec<Span> = vec![];
 
-        self.get_shortcuts().iter().for_each(|(key, action)| {
-            innerp.push(Span::styled(
-                format!("{}", key),
-                ratatui::style::Style::default().fg(ratatui::style::Color::White),
-            ));
-            innerp.push(Span::styled(
-                format!(" {}", action),
-                ratatui::style::Style::default().fg(ratatui::style::Color::DarkGray),
-            ));
-            innerp.push(Span::raw("      "));
-        });
+        self.get_shortcuts(&state.screen, &state.focused_block)
+            .iter()
+            .for_each(|(key, action)| {
+                innerp.push(Span::styled(
+                    format!("{}", key),
+                    ratatui::style::Style::default().fg(ratatui::style::Color::White),
+                ));
+                innerp.push(Span::styled(
+                    format!(" {}", action),
+                    ratatui::style::Style::default().fg(ratatui::style::Color::DarkGray),
+                ));
+                innerp.push(Span::raw("      "));
+            });
 
         let paragraph = Paragraph::new(Line::from(innerp))
             .block(Block::default().borders(Borders::NONE))

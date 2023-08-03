@@ -5,8 +5,11 @@ use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{prelude::*, Frame};
 
 use crate::{
-    app::{AppState, FocusedBlock},
-    components::{button::ButtonComponent, text_input::TextInputComponent, AppComponent},
+    app::{AppScreen, AppState, FocusedBlock},
+    components::{
+        button::ButtonComponent, shortcuts::ShortcutsComponent, text_input::TextInputComponent,
+        AppComponent,
+    },
     shortcuts::{handle_text_input_event, ShortcutHandlerResponse},
 };
 
@@ -25,11 +28,13 @@ impl AppViewTrait for SignInView {
         let username_input = TextInputComponent::new("username", FocusedBlock::UsernameInput)?;
         let password_input = TextInputComponent::new("password", FocusedBlock::PasswordInput)?;
         let signin_button = ButtonComponent::new("Sign In", FocusedBlock::SignInButton)?;
+        let shortcuts = ShortcutsComponent::new()?;
 
         let mut components = HashMap::new();
         components.insert(String::from("username_input"), username_input.as_mutex());
         components.insert(String::from("password_input"), password_input.as_mutex());
         components.insert(String::from("signin_button"), signin_button.as_mutex());
+        components.insert(String::from("shortcuts"), shortcuts.as_mutex());
 
         Ok(components)
     }
@@ -39,13 +44,14 @@ impl AppViewTrait for SignInView {
         frame: &mut Frame<B>,
         state: &mut AppState,
     ) -> Result<HashMap<String, Rect>> {
-        let [_, main_rect, _] = *Layout::default()
+        let [_, main_rect, _, bottom_rect] = *Layout::default()
           .direction(Direction::Vertical)
           .constraints(
               [
                   Constraint::Length(3),
-                  Constraint::Min(4),
-                  Constraint::Length(3),
+                  Constraint::Length(9),
+                  Constraint::Min(1),
+                  Constraint::Length(1),
               ]
               .as_ref(),
           )
@@ -89,6 +95,7 @@ impl AppViewTrait for SignInView {
         positions.insert(String::from("username_input"), username_rect);
         positions.insert(String::from("password_input"), password_rect);
         positions.insert(String::from("signin_button"), button_rect);
+        positions.insert(String::from("shortcuts"), bottom_rect);
 
         Ok(positions)
     }
@@ -99,6 +106,16 @@ impl AppViewTrait for SignInView {
         key: &KeyEvent,
     ) -> Result<ShortcutHandlerResponse> {
         let unique_name = &TextInputComponent::unique_name_from_focused_block(&state.focused_block);
+
+        match key.code {
+            KeyCode::Esc => {
+                state.set_screen(AppScreen::Mission);
+                state.set_focused_block(FocusedBlock::Home);
+                return Ok(ShortcutHandlerResponse::StopPropagation);
+            }
+            _ => {}
+        }
+
         match state.focused_block {
             FocusedBlock::UsernameInput => {
                 match key.code {

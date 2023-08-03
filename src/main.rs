@@ -1,6 +1,5 @@
 mod app;
 mod components;
-mod pages;
 mod shortcuts;
 mod utils;
 mod views;

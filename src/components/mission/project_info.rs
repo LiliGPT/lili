@@ -11,7 +11,7 @@ use ratatui::{
 
 use crate::app::AppState;
 
-use super::{AppComponent, DrawableComponent};
+use super::super::{AppComponent, DrawableComponent};
 
 pub struct ProjectInfoComponent {
     project_dir: String,

@@ -7,9 +7,13 @@ use ratatui::{prelude::*, Frame};
 use crate::{
     app::{AppState, FocusedBlock},
     components::{
-        actions::ActionsComponent, context_files::ContextFilesComponent, header::HeaderComponent,
-        message_input::MessageInputComponent, project_info::ProjectInfoComponent,
-        shortcuts::ShortcutsComponent, text_input::TextInputComponent, AppComponent,
+        header::HeaderComponent,
+        mission::{
+            actions::ActionsComponent, context_files::ContextFilesComponent,
+            message_input::MessageInputComponent, project_info::ProjectInfoComponent,
+        },
+        shortcuts::ShortcutsComponent,
+        AppComponent,
     },
     shortcuts::{handle_text_input_event, ShortcutHandlerResponse},
 };
@@ -30,7 +34,7 @@ impl AppViewTrait for MissionView {
         let el_header = HeaderComponent::new("Mission Control".to_string())?;
         let el_context_files = ContextFilesComponent::new(FocusedBlock::ContextFiles)?;
         let el_actions = ActionsComponent::new()?;
-        let el_shortcuts = ShortcutsComponent::from_focused_block(state.focused_block.clone())?;
+        let el_shortcuts = ShortcutsComponent::new()?;
         let el_project_info = ProjectInfoComponent::new(state.project_dir.clone())?;
 
         let mut components = HashMap::new();

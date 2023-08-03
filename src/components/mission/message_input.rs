@@ -10,7 +10,7 @@ use ratatui::{
 
 use crate::app::{AppState, FocusedBlock};
 
-use super::{AppComponent, DrawableComponent, InputComponent};
+use super::super::{AppComponent, DrawableComponent, InputComponent};
 
 pub struct MessageInputComponent {
     // focused: bool,

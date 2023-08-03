@@ -16,7 +16,7 @@ use crate::{
     utils::list::SelectableList,
 };
 
-use super::{AppComponent, DrawableComponent};
+use super::super::{AppComponent, DrawableComponent};
 
 pub struct ContextFilesComponent {
     focus_name: FocusedBlock,

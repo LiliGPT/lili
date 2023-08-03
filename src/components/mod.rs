@@ -6,13 +6,11 @@ use ratatui::{
     Frame,
 };
 
-pub mod actions;
 pub mod button;
-pub mod context_files;
 pub mod header;
-pub mod message_input;
-pub mod project_info;
+pub mod mission;
 pub mod shortcuts;
+pub mod sign_in;
 pub mod text_input;
 
 pub trait DrawableComponent {
@@ -36,12 +34,12 @@ pub trait AppComponentTrait<B: Backend, Props> {
 }
 
 pub enum AppComponent {
-    Actions(actions::ActionsComponent),
+    Actions(mission::actions::ActionsComponent),
     Button(button::ButtonComponent),
-    ContextFiles(context_files::ContextFilesComponent),
+    ContextFiles(mission::context_files::ContextFilesComponent),
     Header(header::HeaderComponent),
-    MessageInput(message_input::MessageInputComponent),
-    ProjectInfo(project_info::ProjectInfoComponent),
+    MessageInput(mission::message_input::MessageInputComponent),
+    ProjectInfo(mission::project_info::ProjectInfoComponent),
     Shortcuts(shortcuts::ShortcutsComponent),
     TextInput(text_input::TextInputComponent),
 }
