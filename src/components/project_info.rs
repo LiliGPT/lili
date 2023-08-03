@@ -1,3 +1,5 @@
+use std::sync::Mutex;
+
 use anyhow::Result;
 use lilicore::code_analyst;
 use ratatui::{
@@ -9,7 +11,7 @@ use ratatui::{
 
 use crate::app::AppState;
 
-use super::DrawableComponent;
+use super::{AppComponent, DrawableComponent};
 
 pub struct ProjectInfoComponent {
     project_dir: String,
@@ -19,10 +21,19 @@ impl ProjectInfoComponent {
     pub fn new(project_dir: String) -> Result<Self> {
         Ok(Self { project_dir })
     }
+
+    pub fn as_mutex(self) -> Mutex<AppComponent> {
+        Mutex::new(AppComponent::ProjectInfo(self))
+    }
 }
 
 impl DrawableComponent for ProjectInfoComponent {
-    fn draw<B: Backend>(&mut self, f: &mut Frame<B>, rect: Rect) -> Result<()> {
+    fn draw<B: Backend>(
+        &mut self,
+        state: &mut AppState,
+        frame: &mut Frame<B>,
+        rect: Rect,
+    ) -> Result<()> {
         let block = Block::default()
             .borders(Borders::ALL)
             .title("Project Info")
@@ -55,7 +66,7 @@ impl DrawableComponent for ProjectInfoComponent {
             dependencies_line,
         ])
         .block(block);
-        f.render_widget(widget, rect);
+        frame.render_widget(widget, rect);
         Ok(())
     }
 }

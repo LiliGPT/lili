@@ -1,3 +1,5 @@
+use std::sync::Mutex;
+
 use anyhow::Result;
 use ratatui::{
     prelude::{Alignment, Backend, Rect},
@@ -6,31 +8,39 @@ use ratatui::{
     Frame,
 };
 
-use super::DrawableComponent;
+use crate::app::{AppState, FocusedBlock};
+
+use super::{AppComponent, DrawableComponent};
 
 pub struct ButtonComponent {
-    focused: bool,
+    focus_name: FocusedBlock,
     label: String,
 }
 
 impl ButtonComponent {
-    pub fn new(label: &str) -> Result<Self> {
+    pub fn new(label: &str, focus_name: FocusedBlock) -> Result<Self> {
         Ok(Self {
-            focused: false,
+            // focused: false,
+            focus_name,
             label: label.to_string(),
         })
     }
 
-    pub fn set_focus(&mut self, focused: bool) {
-        self.focused = focused;
+    pub fn as_mutex(self) -> Mutex<AppComponent> {
+        Mutex::new(AppComponent::Button(self))
     }
 }
 
 impl DrawableComponent for ButtonComponent {
-    fn draw<B: Backend>(&mut self, f: &mut Frame<B>, rect: Rect) -> Result<()> {
+    fn draw<B: Backend>(
+        &mut self,
+        state: &mut AppState,
+        frame: &mut Frame<B>,
+        rect: Rect,
+    ) -> Result<()> {
         let mut block = Block::default().borders(Borders::ALL);
 
-        if self.focused {
+        if state.focused_block == self.focus_name {
             block = block.border_style(Style::default().fg(Color::Cyan));
         }
 
@@ -38,7 +48,7 @@ impl DrawableComponent for ButtonComponent {
             .alignment(Alignment::Center)
             .block(block);
 
-        f.render_widget(button, rect);
+        frame.render_widget(button, rect);
 
         Ok(())
     }

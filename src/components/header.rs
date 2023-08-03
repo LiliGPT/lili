@@ -1,3 +1,5 @@
+use std::sync::Mutex;
+
 use anyhow::Result;
 use ratatui::{
     prelude::{Alignment, Backend, Rect},
@@ -6,7 +8,9 @@ use ratatui::{
     Frame,
 };
 
-use super::DrawableComponent;
+use crate::app::AppState;
+
+use super::{AppComponent, DrawableComponent};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum HeaderStatus {
@@ -28,6 +32,10 @@ impl HeaderComponent {
         })
     }
 
+    pub fn as_mutex(self) -> Mutex<AppComponent> {
+        Mutex::new(AppComponent::Header(self))
+    }
+
     pub fn set_status(&mut self, status: HeaderStatus) {
         self.status = status;
     }
@@ -38,7 +46,12 @@ impl HeaderComponent {
 }
 
 impl DrawableComponent for HeaderComponent {
-    fn draw<B: Backend>(&mut self, f: &mut Frame<B>, rect: Rect) -> Result<()> {
+    fn draw<B: Backend>(
+        &mut self,
+        state: &mut AppState,
+        frame: &mut Frame<B>,
+        rect: Rect,
+    ) -> Result<()> {
         let mut texts: Vec<Span> = vec![];
         texts.push(Span::styled(
             format!("{} ", self.project_name),
@@ -63,7 +76,7 @@ impl DrawableComponent for HeaderComponent {
         let header = Paragraph::new(Line::from(texts))
             .block(Block::default().borders(Borders::NONE))
             .alignment(Alignment::Left);
-        f.render_widget(header, rect);
+        frame.render_widget(header, rect);
         Ok(())
     }
 }

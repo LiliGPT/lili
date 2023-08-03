@@ -1,3 +1,5 @@
+use std::sync::Mutex;
+
 use anyhow::Result;
 use ratatui::{
     prelude::{Backend, Constraint, Rect},
@@ -6,50 +8,68 @@ use ratatui::{
     Frame,
 };
 
-use super::{DrawableComponent, InputComponent};
+use crate::app::{AppState, FocusedBlock};
+
+use super::{AppComponent, DrawableComponent, InputComponent};
 
 pub struct MessageInputComponent {
-    focused: bool,
+    // focused: bool,
     value: String,
 }
 
 impl MessageInputComponent {
     pub fn new() -> Result<Self> {
         Ok(Self {
-            focused: false,
+            // focused: false,
             value: String::new(),
         })
     }
 
-    pub fn set_focus(&mut self, focused: bool) {
-        self.focused = focused;
+    pub fn as_mutex(self) -> Mutex<AppComponent> {
+        Mutex::new(AppComponent::MessageInput(self))
+    }
+
+    pub fn unique_name() -> String {
+        String::from("message")
     }
 }
 
 impl DrawableComponent for MessageInputComponent {
-    fn draw<B: Backend>(&mut self, f: &mut Frame<B>, rect: Rect) -> Result<()> {
+    fn draw<B: Backend>(
+        &mut self,
+        state: &mut AppState,
+        frame: &mut Frame<B>,
+        rect: Rect,
+    ) -> Result<()> {
         let mut block = Block::default().borders(Borders::ALL).title("Message");
 
-        let mut message = ratatui::widgets::Paragraph::new(self.value.as_str())
+        let value = state
+            .input_values
+            .get(&self.unique_name())
+            .unwrap_or(&String::from(""))
+            .clone();
+
+        let mut message = ratatui::widgets::Paragraph::new(value)
             .alignment(ratatui::prelude::Alignment::Left)
             .wrap(Wrap { trim: true });
 
-        if self.focused {
+        if state.focused_block == FocusedBlock::Message {
             block = block
                 .border_style(ratatui::style::Style::default().fg(ratatui::style::Color::Cyan));
         }
 
         message = message.block(block);
 
-        f.render_widget(message, rect);
+        frame.render_widget(message, rect);
 
         Ok(())
     }
 }
 
 impl InputComponent for MessageInputComponent {
-    fn set_focus(&mut self, focused: bool) {
-        self.focused = focused;
+    fn unique_name(&self) -> String {
+        // String::from("message")
+        Self::unique_name()
     }
 
     fn set_value(&mut self, value: String) {

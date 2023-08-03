@@ -1,9 +1,11 @@
 mod app;
 mod components;
 mod pages;
+mod shortcuts;
 mod utils;
+mod views;
 
-use std::{error::Error, io};
+use std::{error::Error, io, sync::Mutex};
 
 use anyhow::Result;
 use app::{App, AppState};
@@ -29,7 +31,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         None => std::env::current_dir()?.to_str().unwrap().to_string(),
     };
     // create app and run it
-    let state: &'static mut AppState = Box::leak(Box::new(AppState::new(project_dir)?));
+    let state = Mutex::new(AppState::new(project_dir)?);
     let mut app = App::new(state)?;
     let res = run_app(&mut terminal, &mut app);
 

@@ -1,6 +1,7 @@
 use std::{
     borrow::BorrowMut,
     cell::{Cell, RefCell},
+    sync::Mutex,
 };
 
 use anyhow::Result;
@@ -10,9 +11,9 @@ use ratatui::{
     Frame,
 };
 
-use crate::utils::list::BatchList;
+use crate::{app::AppState, utils::list::BatchList};
 
-use super::DrawableComponent;
+use super::{AppComponent, DrawableComponent};
 
 pub struct ContextFilesComponent {
     focused: bool,
@@ -31,6 +32,10 @@ impl ContextFilesComponent {
             state,
             focused,
         })
+    }
+
+    pub fn as_mutex(self) -> Mutex<AppComponent> {
+        Mutex::new(AppComponent::ContextFiles(self))
     }
 
     pub fn select_next(&mut self) {
@@ -65,7 +70,12 @@ impl ContextFilesComponent {
 }
 
 impl DrawableComponent for ContextFilesComponent {
-    fn draw<B: Backend>(&mut self, f: &mut Frame<B>, rect: Rect) -> Result<()> {
+    fn draw<B: Backend>(
+        &mut self,
+        state: &mut AppState,
+        frame: &mut Frame<B>,
+        rect: Rect,
+    ) -> Result<()> {
         let items = self.items.to_items();
 
         let mut block = Block::default()
@@ -85,7 +95,7 @@ impl DrawableComponent for ContextFilesComponent {
         list = list.block(block);
 
         // f.render_widget(list, rect);
-        f.render_stateful_widget(list, rect, self.state.get_mut());
+        frame.render_stateful_widget(list, rect, self.state.get_mut());
         Ok(())
     }
 }
