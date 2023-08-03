@@ -12,6 +12,7 @@ use ratatui::{
 
 use crate::{
     shortcuts::{handle_global_shortcuts, ShortcutHandlerResponse},
+    utils::list::SelectableList,
     views::{AppView, MissionView, SignInView},
 };
 
@@ -28,6 +29,7 @@ pub struct AppState {
     pub screen: AppScreen,
     pub signed_in: bool,
     pub input_values: HashMap<String, String>,
+    pub context_items: SelectableList,
 }
 
 impl AppState {
@@ -38,6 +40,11 @@ impl AppState {
             focused_block: FocusedBlock::default(),
             signed_in: false,
             input_values: HashMap::new(),
+            context_items: SelectableList::new(vec![
+                ("context 1", "context 1 content"),
+                ("context 2", "context 2 content"),
+                ("context 3", "context 3 content"),
+            ]),
         })
     }
 

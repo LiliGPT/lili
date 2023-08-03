@@ -28,7 +28,7 @@ impl AppViewTrait for MissionView {
     fn components(&mut self, state: &mut AppState) -> Result<HashMap<String, Mutex<AppComponent>>> {
         let el_message = MessageInputComponent::new()?;
         let el_header = HeaderComponent::new("Mission Control".to_string())?;
-        let el_context_files = ContextFilesComponent::new()?;
+        let el_context_files = ContextFilesComponent::new(FocusedBlock::ContextFiles)?;
         let el_actions = ActionsComponent::new()?;
         let el_shortcuts = ShortcutsComponent::from_focused_block(state.focused_block.clone())?;
         let el_project_info = ProjectInfoComponent::new(state.project_dir.clone())?;
@@ -112,12 +112,27 @@ impl AppViewTrait for MissionView {
                 }
                 return handle_text_input_event(state, key, &MessageInputComponent::unique_name());
             }
+            FocusedBlock::ContextFiles => match key.code {
+                KeyCode::Up => {
+                    state.context_items.select_previous();
+                    return Ok(ShortcutHandlerResponse::StopPropagation);
+                }
+                KeyCode::Down => {
+                    state.context_items.select_next();
+                    return Ok(ShortcutHandlerResponse::StopPropagation);
+                }
+                _ => {}
+            },
             _ => {}
         }
 
         match key.code {
             KeyCode::Char('i') => {
                 state.set_focused_block(FocusedBlock::Message);
+                Ok(ShortcutHandlerResponse::StopPropagation)
+            }
+            KeyCode::Char('c') => {
+                state.set_focused_block(FocusedBlock::ContextFiles);
                 Ok(ShortcutHandlerResponse::StopPropagation)
             }
             _ => Ok(ShortcutHandlerResponse::Continue),
