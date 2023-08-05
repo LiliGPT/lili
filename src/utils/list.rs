@@ -17,6 +17,12 @@ impl SelectableItem for (String, String) {
     }
 }
 
+impl SelectableItem for String {
+    fn to_string(&self) -> String {
+        self.clone()
+    }
+}
+
 impl SelectableItem for MissionAction {
     fn to_string(&self) -> String {
         let path = &self.path;
@@ -66,7 +72,10 @@ impl<T: SelectableItem> SelectableList<T> {
     pub fn select_next(&mut self) {
         let selected_index = match self.selected_index {
             Some(index) => {
-                if index >= self.items.len() - 1 {
+                let items_len = self.items.len();
+                if items_len <= 0 {
+                    0
+                } else if index >= items_len - 1 {
                     0
                 } else {
                     index + 1
@@ -81,7 +90,12 @@ impl<T: SelectableItem> SelectableList<T> {
         let selected_index = match self.selected_index {
             Some(index) => {
                 if index == 0 {
-                    self.items.len() - 1
+                    let items_len = self.items.len();
+                    if items_len <= 0 {
+                        0
+                    } else {
+                        items_len - 1
+                    }
                 } else {
                     index - 1
                 }

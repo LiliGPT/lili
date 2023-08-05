@@ -7,11 +7,13 @@ use ratatui::{
 };
 use std::{any::Any, collections::HashMap, rc::Rc, sync::Mutex};
 
+mod add_context_files;
 mod commit_temp_branch;
 mod create_temp_branch;
 mod mission;
 mod sign_in;
 
+pub use add_context_files::*;
 pub use commit_temp_branch::*;
 pub use create_temp_branch::*;
 pub use mission::*;
@@ -31,6 +33,7 @@ pub enum AppView {
     SignIn(SignInView),
     CreateTempBranch(CreateTempBranchView),
     CommitTempBranch(CommitTempBranchView),
+    AddContextFiles(AddContextFilesView),
 }
 
 impl AppView {
@@ -40,6 +43,7 @@ impl AppView {
             AppView::SignIn(view) => view.components(state),
             AppView::CreateTempBranch(view) => view.components(state),
             AppView::CommitTempBranch(view) => view.components(state),
+            AppView::AddContextFiles(view) => view.components(state),
         }?;
 
         let positions = match self {
@@ -47,6 +51,7 @@ impl AppView {
             AppView::SignIn(view) => view.positions(frame, state),
             AppView::CreateTempBranch(view) => view.positions(frame, state),
             AppView::CommitTempBranch(view) => view.positions(frame, state),
+            AppView::AddContextFiles(view) => view.positions(frame, state),
         }?;
 
         for (name, component) in components {
@@ -69,6 +74,7 @@ impl AppView {
             AppView::SignIn(view) => view.handle_events(state, &key).await,
             AppView::CreateTempBranch(view) => view.handle_events(state, &key).await,
             AppView::CommitTempBranch(view) => view.handle_events(state, &key).await,
+            AppView::AddContextFiles(view) => view.handle_events(state, &key).await,
         };
     }
 }

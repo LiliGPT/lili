@@ -63,6 +63,10 @@ impl MissionView {
                     state.context_items.select_next();
                     return Ok(ShortcutHandlerResponse::StopPropagation);
                 }
+                KeyCode::Char('a') => {
+                    // add context file
+                    // todo: set_screen + set_focused_block + stoppropagation
+                }
                 _ => {}
             },
             FocusedBlock::Actions => match key.code {

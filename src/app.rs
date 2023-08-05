@@ -2,7 +2,11 @@ use std::{collections::HashMap, sync::Mutex};
 
 use anyhow::Result;
 use crossterm::event::{self, Event};
-use lilicore::code_missions_api::{MissionAction, MissionActionType};
+use lilicore::{
+    code_analyst::{self, project_files::get_project_files},
+    code_missions_api::{MissionAction, MissionActionType},
+    io::LocalPath,
+};
 use ratatui::{
     prelude::{Backend, Constraint, Direction, Layout},
     Frame,
@@ -14,16 +18,36 @@ use crate::{
     redraw_app,
     shortcuts::{handle_global_shortcuts, ShortcutHandlerResponse},
     utils::list::SelectableList,
-    views::{AppView, CommitTempBranchView, CreateTempBranchView, MissionView, SignInView},
+    views::{
+        AddContextFilesView, AppView, CommitTempBranchView, CreateTempBranchView, MissionView,
+        SignInView,
+    },
 };
 
 #[derive(Debug, PartialEq, Default, Clone, Eq, Hash)]
 pub enum AppScreen {
     Mission,
     SignIn,
-    #[default]
+    // #[default]
     CreateTempBranch,
     CommitTempBranch,
+    #[default]
+    AddContextFiles,
+}
+
+#[derive(Debug, PartialEq, Default, Clone, Display)]
+pub enum FocusedBlock {
+    // #[default]
+    Home,
+    Message,
+    ContextFiles,
+    Actions,
+    UsernameInput,
+    PasswordInput,
+    SignInButton,
+    CommitMessage,
+    #[default]
+    SearchContextFileInput,
 }
 
 #[derive(Debug, Clone)]
@@ -126,24 +150,26 @@ impl AppState {
     pub fn set_current_execution_id(&mut self, execution_id: String) {
         self.execution_id = Some(execution_id);
     }
+
+    pub fn get_project_files(&mut self) -> Result<Vec<String>> {
+        let project_dir = self.project_dir.clone();
+        let project_dir_path = LocalPath(self.project_dir.clone());
+        let path_info = match code_analyst::get_path_info(&project_dir) {
+            Ok(path_info) => path_info,
+            Err(err) => {
+                anyhow::bail!("Failed to get path info: {:?}", err);
+            }
+        };
+        let code_language = &path_info.code_language;
+        let framework = &path_info.framework;
+        let project_files = get_project_files(project_dir_path, code_language, framework);
+        Ok(project_files)
+    }
 }
 
 pub struct App {
     state: Mutex<AppState>,
     views: HashMap<AppScreen, Mutex<AppView>>,
-}
-
-#[derive(Debug, PartialEq, Default, Clone, Display)]
-pub enum FocusedBlock {
-    #[default]
-    Home,
-    Message,
-    ContextFiles,
-    Actions,
-    UsernameInput,
-    PasswordInput,
-    SignInButton,
-    CommitMessage,
 }
 
 impl App {
@@ -169,6 +195,11 @@ impl App {
             views.insert(
                 AppScreen::CommitTempBranch,
                 Mutex::new(AppView::CommitTempBranch(CommitTempBranchView::new())),
+            );
+
+            views.insert(
+                AppScreen::AddContextFiles,
+                Mutex::new(AppView::AddContextFiles(AddContextFilesView::new())),
             );
 
             views
