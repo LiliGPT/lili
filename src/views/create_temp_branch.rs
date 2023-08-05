@@ -43,10 +43,10 @@ impl CreateTempBranchView {
                 // return Ok(ShortcutHandlerResponse::Mission);
                 match git_temporary_branch_create(state) {
                     Ok(output) => {
-                        state.set_header_status(HeaderStatus::SuccessMessage(output));
                         state.set_screen(AppScreen::Mission);
                         state.set_focused_block(FocusedBlock::Home);
-                        return Ok(ShortcutHandlerResponse::Mission);
+                        state.set_header_status(HeaderStatus::SuccessMessage(output));
+                        return Ok(ShortcutHandlerResponse::StopPropagation);
                     }
                     Err(err) => {
                         state.set_header_status(HeaderStatus::ErrorMessage(err.to_string()));
