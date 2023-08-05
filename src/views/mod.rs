@@ -7,10 +7,12 @@ use ratatui::{
 };
 use std::{any::Any, collections::HashMap, rc::Rc, sync::Mutex};
 
+mod commit_temp_branch;
 mod create_temp_branch;
 mod mission;
 mod sign_in;
 
+pub use commit_temp_branch::*;
 pub use create_temp_branch::*;
 pub use mission::*;
 pub use sign_in::*;
@@ -28,6 +30,7 @@ pub enum AppView {
     Mission(MissionView),
     SignIn(SignInView),
     CreateTempBranch(CreateTempBranchView),
+    CommitTempBranch(CommitTempBranchView),
 }
 
 impl AppView {
@@ -36,12 +39,14 @@ impl AppView {
             AppView::Mission(view) => view.components(state),
             AppView::SignIn(view) => view.components(state),
             AppView::CreateTempBranch(view) => view.components(state),
+            AppView::CommitTempBranch(view) => view.components(state),
         }?;
 
         let positions = match self {
             AppView::Mission(view) => view.positions(frame, state),
             AppView::SignIn(view) => view.positions(frame, state),
             AppView::CreateTempBranch(view) => view.positions(frame, state),
+            AppView::CommitTempBranch(view) => view.positions(frame, state),
         }?;
 
         for (name, component) in components {
@@ -63,6 +68,7 @@ impl AppView {
             AppView::Mission(view) => view.handle_events(state, &key).await,
             AppView::SignIn(view) => view.handle_events(state, &key).await,
             AppView::CreateTempBranch(view) => view.handle_events(state, &key).await,
+            AppView::CommitTempBranch(view) => view.handle_events(state, &key).await,
         };
     }
 }

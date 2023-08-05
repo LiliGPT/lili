@@ -10,7 +10,7 @@ use super::{AppComponent, DrawableComponent, InputComponent};
 pub struct TextInputComponent {
     // focused: bool,
     focus_name: FocusedBlock,
-    value: String,
+    // value: String,
     label: String,
     is_password: bool,
 }
@@ -20,7 +20,7 @@ impl TextInputComponent {
         Ok(Self {
             // focused: false,
             focus_name,
-            value: String::new(),
+            // value: String::new(),
             label: label.to_string(),
             is_password: false,
         })
@@ -55,11 +55,12 @@ impl DrawableComponent for TextInputComponent {
             .borders(ratatui::widgets::Borders::ALL)
             .title(self.label.clone());
 
-        let value = state
-            .input_values
-            .get(&self.unique_name())
-            .unwrap_or(&String::from(""))
-            .clone();
+        // let value = state
+        //     .input_values
+        //     .get(&self.unique_name())
+        //     .unwrap_or(&String::from(""))
+        //     .clone();
+        let value = state.get_input_value_from_focused(state.focused_block.clone());
 
         let value = if self.is_password {
             value.chars().map(|_| 'x').collect::<String>()
@@ -84,12 +85,12 @@ impl DrawableComponent for TextInputComponent {
     }
 }
 
-impl InputComponent for TextInputComponent {
-    fn set_value(&mut self, value: String) {
-        self.value = value;
-    }
-
-    fn value(&self) -> String {
-        self.value.clone()
-    }
-}
+// impl InputComponent for TextInputComponent {
+//     fn set_value(&mut self, value: String) {
+//         self.value = value;
+//     }
+//
+//     fn value(&self) -> String {
+//         self.value.clone()
+//     }
+// }

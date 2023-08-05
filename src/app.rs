@@ -14,7 +14,7 @@ use crate::{
     redraw_app,
     shortcuts::{handle_global_shortcuts, ShortcutHandlerResponse},
     utils::list::SelectableList,
-    views::{AppView, CreateTempBranchView, MissionView, SignInView},
+    views::{AppView, CommitTempBranchView, CreateTempBranchView, MissionView, SignInView},
 };
 
 #[derive(Debug, PartialEq, Default, Clone, Eq, Hash)]
@@ -23,6 +23,7 @@ pub enum AppScreen {
     SignIn,
     #[default]
     CreateTempBranch,
+    CommitTempBranch,
 }
 
 #[derive(Debug, Clone)]
@@ -132,6 +133,7 @@ pub enum FocusedBlock {
     UsernameInput,
     PasswordInput,
     SignInButton,
+    CommitMessage,
 }
 
 impl App {
@@ -152,6 +154,11 @@ impl App {
             views.insert(
                 AppScreen::CreateTempBranch,
                 Mutex::new(AppView::CreateTempBranch(CreateTempBranchView::new())),
+            );
+
+            views.insert(
+                AppScreen::CommitTempBranch,
+                Mutex::new(AppView::CommitTempBranch(CommitTempBranchView::new())),
             );
 
             views

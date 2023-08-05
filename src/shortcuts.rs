@@ -1,7 +1,10 @@
 use anyhow::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
 
-use crate::app::{AppScreen, AppState, FocusedBlock};
+use crate::{
+    app::{AppScreen, AppState, FocusedBlock},
+    components::header::HeaderStatus,
+};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ShortcutHandlerResponse {
@@ -18,6 +21,7 @@ pub fn handle_global_shortcuts(
 ) -> Result<ShortcutHandlerResponse> {
     if let KeyCode::Esc = key.code {
         state.set_focused_block(FocusedBlock::Home);
+        state.set_header_status(HeaderStatus::Idle);
         return Ok(ShortcutHandlerResponse::Mission);
     }
 
@@ -28,13 +32,22 @@ pub fn handle_global_shortcuts(
     if let KeyCode::Char('l') = key.code {
         state.set_screen(AppScreen::SignIn);
         state.set_focused_block(FocusedBlock::UsernameInput);
+        state.set_header_status(HeaderStatus::Idle);
         return Ok(ShortcutHandlerResponse::SignIn);
     }
 
     if let KeyCode::Char('m') = key.code {
         state.set_screen(AppScreen::Mission);
         state.set_focused_block(FocusedBlock::Home);
+        state.set_header_status(HeaderStatus::Idle);
         return Ok(ShortcutHandlerResponse::Mission);
+    }
+
+    if let KeyCode::Char('.') = key.code {
+        state.set_screen(AppScreen::CommitTempBranch);
+        state.set_focused_block(FocusedBlock::CommitMessage);
+        state.set_header_status(HeaderStatus::Idle);
+        return Ok(ShortcutHandlerResponse::StopPropagation);
     }
 
     Ok(ShortcutHandlerResponse::Continue)
@@ -45,11 +58,7 @@ pub fn handle_text_input_event(
     key: &KeyEvent,
     focus_name: &FocusedBlock,
 ) -> Result<ShortcutHandlerResponse> {
-    let current_value = state
-        .input_values
-        .get(&focus_name.to_string())
-        .unwrap_or(&String::new())
-        .clone();
+    let current_value = state.get_input_value_from_focused(focus_name.clone());
 
     if let KeyCode::Char(key) = key.code {
         if key.is_ascii() && !key.is_control() {

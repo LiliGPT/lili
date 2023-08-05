@@ -19,6 +19,7 @@ pub enum HeaderStatus {
     Loading,
     ErrorMessage(String),
     LoadingMessage(String),
+    SuccessMessage(String),
 }
 
 pub struct HeaderComponent;
@@ -53,18 +54,21 @@ impl DrawableComponent for HeaderComponent {
             HeaderStatus::Loading => "Loading",
             HeaderStatus::ErrorMessage(ref msg) => msg,
             HeaderStatus::LoadingMessage(ref msg) => msg,
+            HeaderStatus::SuccessMessage(ref msg) => msg,
         };
         let loading_color = match state.header_status {
             HeaderStatus::Idle => ratatui::style::Color::DarkGray,
             HeaderStatus::Loading => ratatui::style::Color::Cyan,
             HeaderStatus::ErrorMessage(_) => ratatui::style::Color::Red,
             HeaderStatus::LoadingMessage(_) => ratatui::style::Color::LightCyan,
+            HeaderStatus::SuccessMessage(_) => ratatui::style::Color::Green,
         };
         let prefix_text = match state.header_status {
             HeaderStatus::Idle => "*",
             HeaderStatus::Loading => "*",
             HeaderStatus::ErrorMessage(_) => "Error:",
             HeaderStatus::LoadingMessage(_) => "Loading:",
+            HeaderStatus::SuccessMessage(_) => "",
         };
         texts.push(Span::styled(
             format!("{} {}", prefix_text, loading_text),
