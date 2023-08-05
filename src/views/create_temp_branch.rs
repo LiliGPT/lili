@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Mutex};
 
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};
-use lilicore::shell::run_shell_command;
+use lilicore::{git_repo::get_current_branch_name, shell::run_shell_command};
 use ratatui::{
     prelude::{Backend, Constraint, Layout, Rect},
     text::{Line, Span},
@@ -126,8 +126,9 @@ impl AppViewTrait for CreateTempBranchView {
                 return Ok(HashMap::new());
             };
 
-        let [line1_rect, line2_rect, line3_rect] = *Layout::default()
+        let [line1_rect, line2_rect, line3_rect, bottom_line_rect] = *Layout::default()
             .constraints([
+                Constraint::Length(3),
                 Constraint::Length(3),
                 Constraint::Length(3),
                 Constraint::Length(1),
@@ -136,6 +137,9 @@ impl AppViewTrait for CreateTempBranchView {
             else {
                 return Ok(HashMap::new());
             };
+
+        let project_dir = state.project_dir.clone();
+        let current_branch = get_current_branch_name(&project_dir)?;
 
         let line_contents: Vec<(Rect, Line)> = vec![
             (
@@ -161,6 +165,10 @@ impl AppViewTrait for CreateTempBranchView {
                         ratatui::style::Style::default().fg(ratatui::style::Color::Red),
                     ),
                 ]),
+            ),
+            (
+                bottom_line_rect,
+                Line::from(Span::raw(format!("current branch: {}", current_branch))),
             ),
         ];
 

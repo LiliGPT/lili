@@ -63,8 +63,9 @@ impl CommitTempBranchView {
                 match git_add_and_commit(message, project_dir) {
                     Ok(output) => {
                         state.set_screen(AppScreen::Mission);
-                        state.set_focused_block(FocusedBlock::Message);
+                        state.set_focused_block(FocusedBlock::Home);
                         state.set_input_value(&FocusedBlock::Message, "");
+                        state.set_input_value(&FocusedBlock::CommitMessage, "");
                         // _replace_context_files_with_actions(state);
                         state.set_context_items(vec![]);
                         state.set_action_items(vec![]);
@@ -165,8 +166,9 @@ impl AppViewTrait for CommitTempBranchView {
                 return Ok(HashMap::new());
             };
 
-        let [line1_rect, line2_rect, line3_rect] = *Layout::default()
+        let [line1_rect, line2_rect, line3_rect, bottom_line_rect] = *Layout::default()
             .constraints([
+                Constraint::Length(3),
                 Constraint::Length(3),
                 Constraint::Length(3),
                 Constraint::Length(1),
@@ -176,6 +178,9 @@ impl AppViewTrait for CommitTempBranchView {
                 return Ok(HashMap::new());
             };
 
+        let project_dir = state.project_dir.clone();
+        let current_branch = get_current_branch_name(&project_dir)?;
+
         let line_contents: Vec<(Rect, Line)> = vec![
             (
                 line1_rect,
@@ -184,6 +189,10 @@ impl AppViewTrait for CommitTempBranchView {
                 )),
             ),
             (line3_rect, Line::from(Span::raw("[Enter] yes   [Esc] no"))),
+            (
+                bottom_line_rect,
+                Line::from(Span::raw(format!("current branch: {}", current_branch))),
+            ),
         ];
 
         for line in line_contents {
