@@ -15,7 +15,7 @@ use crate::{
         header::HeaderComponent, shortcuts::ShortcutsComponent, text_input::TextInputComponent,
         AppComponent,
     },
-    shortcuts::ShortcutHandlerResponse,
+    shortcuts::{handle_text_input_event, ShortcutHandlerResponse},
     utils::list::SelectableList,
 };
 
@@ -34,7 +34,7 @@ impl AddContextFilesView {
         }
     }
 
-    fn get_selected_items(&mut self, state: &mut AppState) -> Vec<String> {
+    fn get_selected_context_file_paths(&mut self, state: &mut AppState) -> Vec<String> {
         state
             .context_items
             .items
@@ -84,9 +84,10 @@ impl AddContextFilesView {
             self.list_items = state.get_project_files()?;
             state.set_screen(AppScreen::Mission);
             state.set_focused_block(FocusedBlock::ContextFiles);
-            return Ok(ShortcutHandlerResponse::Mission);
+            return Ok(ShortcutHandlerResponse::StopPropagation);
         }
-        Ok(ShortcutHandlerResponse::Continue)
+        self.selected_index = 0;
+        return handle_text_input_event(state, key, &FocusedBlock::SearchContextFileInput);
     }
 }
 
@@ -137,7 +138,15 @@ impl AppViewTrait for AddContextFilesView {
             (String::from("search"), search_rect),
         ];
 
+        let filter_string =
+            state.get_input_value_from_focused(FocusedBlock::SearchContextFileInput);
+
         let orig_project_files = state.get_project_files()?;
+        let orig_project_files = orig_project_files
+            .iter()
+            .filter(|file| file.contains(&filter_string))
+            .map(|file| file.to_string())
+            .collect::<Vec<String>>();
         self.list_items = orig_project_files;
 
         let mut selection_map = vec![];
@@ -146,7 +155,12 @@ impl AppViewTrait for AddContextFilesView {
         let mut project_files = project_files.to_items();
         // let context_items = state.context_items.to_items();
 
-        let real_index = self.selected_index % project_files.clone().len();
+        let list_len = project_files.len();
+        let real_index = if &list_len > &0 {
+            self.selected_index % project_files.clone().len()
+        } else {
+            0
+        };
 
         for (i, item) in self.list_items.clone().iter().enumerate() {
             let mut was_found = false;
@@ -178,7 +192,7 @@ impl AppViewTrait for AddContextFilesView {
 
         let list = ratatui::widgets::List::new(project_files.clone())
             .block(block)
-            .highlight_style(ratatui::style::Style::default().fg(ratatui::style::Color::Yellow))
+            // .highlight_style(ratatui::style::Style::default().fg(ratatui::style::Color::Yellow))
             .highlight_symbol("> ");
 
         let list_state = &mut ListState::default().with_selected(Some(real_index));

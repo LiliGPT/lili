@@ -48,14 +48,20 @@ impl ShortcutsComponent {
                 return vec![
                     ("i", "create mission"),
                     ("c", "context"),
-                    ("r", "reset"),
-                    ("g", "git"),
-                    ("s", "settings"),
-                    ("h", "help"),
-                ]
+                    ("a", "actions"),
+                    (".", "commit temp branch"),
+                    ("q", "quit"),
+                    // ("r", "reset"),
+                    // ("g", "git"),
+                    // ("s", "settings"),
+                    // ("h", "help"),
+                ];
             }
             FocusedBlock::Message => return vec![("Esc", "exit"), ("Enter", "send")],
-            FocusedBlock::Actions => return vec![("a", "approve and run"), ("x", "cancel")],
+            FocusedBlock::Actions => return vec![("y", "approve and run"), ("x", "cancel")],
+            FocusedBlock::ContextFiles => {
+                return vec![("p", "pick files"), ("d", "remove from context")]
+            }
             _ => {}
         }
 

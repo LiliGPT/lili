@@ -65,6 +65,31 @@ impl<T: SelectableItem> SelectableList<T> {
         self.items.push(item);
     }
 
+    pub fn remove_item_at(&mut self, index: usize) {
+        self.items.remove(index);
+    }
+
+    pub fn remove_selected_item(&mut self) {
+        match self.selected_index {
+            Some(index) => {
+                self.remove_item_at(index);
+                let list_len = self.items.len();
+                let new_index = if list_len > 0 {
+                    if index >= list_len {
+                        list_len - 1
+                    } else {
+                        index
+                    }
+                } else {
+                    self.select(None);
+                    return;
+                };
+                self.select(Some(new_index));
+            }
+            None => {}
+        }
+    }
+
     pub fn len(&self) -> u16 {
         self.items.len() as u16
     }

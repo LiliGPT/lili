@@ -2,7 +2,9 @@ use std::{collections::HashMap, sync::Mutex};
 
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};
-use lilicore::{code_missions_api::MissionAction, shell::run_shell_command};
+use lilicore::{
+    code_missions_api::MissionAction, git_repo::get_current_branch_name, shell::run_shell_command,
+};
 use ratatui::{
     prelude::{Backend, Constraint, Layout, Rect},
     text::{Line, Span},
@@ -105,23 +107,9 @@ fn _replace_context_files_with_actions(state: &mut AppState) -> Result<()> {
     Ok(())
 }
 
-fn git_get_current_branch(project_dir: &str) -> Result<String> {
-    let project_dir = project_dir.to_string();
-    let output = std::process::Command::new("git")
-        .arg("branch")
-        .arg("--show-current")
-        .current_dir(project_dir)
-        .output()?;
-    if !output.status.clone().success() {
-        let error_message = String::from_utf8(output.stderr.clone())?;
-        anyhow::bail!(error_message);
-    }
-    Ok(String::from_utf8(output.stdout)?)
-}
-
 fn git_temporary_branch_destroy(base_branch_name: &str, project_dir: &str) -> Result<String> {
     // todo: save branch name in state
-    let temp_branch_name = &git_get_current_branch(project_dir)?;
+    let temp_branch_name = &get_current_branch_name(project_dir)?;
     if !temp_branch_name.starts_with("temp-") {
         anyhow::bail!("not a temp branch");
     }

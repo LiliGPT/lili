@@ -5,6 +5,7 @@ use crossterm::event::{self, Event};
 use lilicore::{
     code_analyst::{self, project_files::get_project_files},
     code_missions_api::{MissionAction, MissionActionType},
+    git_repo,
     io::LocalPath,
 };
 use ratatui::{
@@ -26,18 +27,17 @@ use crate::{
 
 #[derive(Debug, PartialEq, Default, Clone, Eq, Hash)]
 pub enum AppScreen {
+    #[default]
     Mission,
     SignIn,
-    // #[default]
     CreateTempBranch,
     CommitTempBranch,
-    #[default]
     AddContextFiles,
 }
 
 #[derive(Debug, PartialEq, Default, Clone, Display)]
 pub enum FocusedBlock {
-    // #[default]
+    #[default]
     Home,
     Message,
     ContextFiles,
@@ -46,7 +46,6 @@ pub enum FocusedBlock {
     PasswordInput,
     SignInButton,
     CommitMessage,
-    #[default]
     SearchContextFileInput,
 }
 
@@ -62,6 +61,7 @@ pub struct AppState {
     pub header_status: HeaderStatus,
     pub user_name: String,
     pub execution_id: Option<String>,
+    pub base_branch_name: String,
 }
 
 impl AppState {
@@ -83,9 +83,15 @@ impl AppState {
         //         action_type: MissionActionType::UpdateFile,
         //     },
         // ];
+        let base_branch_name = git_repo::get_current_branch_name(&project_dir)?;
+        let screen = if base_branch_name.clone().starts_with("temp-") {
+            AppScreen::default()
+        } else {
+            AppScreen::CreateTempBranch
+        };
         Ok(Self {
             project_dir,
-            screen: AppScreen::default(),
+            screen,
             focused_block: FocusedBlock::default(),
             signed_in: false,
             header_status: HeaderStatus::default(),
@@ -94,6 +100,7 @@ impl AppState {
             context_items: SelectableList::new(vec![]),
             action_items: SelectableList::new(vec![]),
             execution_id: None,
+            base_branch_name,
         })
     }
 

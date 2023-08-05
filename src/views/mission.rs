@@ -63,9 +63,14 @@ impl MissionView {
                     state.context_items.select_next();
                     return Ok(ShortcutHandlerResponse::StopPropagation);
                 }
-                KeyCode::Char('a') => {
-                    // add context file
-                    // todo: set_screen + set_focused_block + stoppropagation
+                KeyCode::Char('d') => {
+                    state.context_items.remove_selected_item();
+                    return Ok(ShortcutHandlerResponse::StopPropagation);
+                }
+                KeyCode::Char('p') => {
+                    state.set_screen(AppScreen::AddContextFiles);
+                    state.set_focused_block(FocusedBlock::SearchContextFileInput);
+                    return Ok(ShortcutHandlerResponse::StopPropagation);
                 }
                 _ => {}
             },
@@ -77,6 +82,27 @@ impl MissionView {
                 KeyCode::Down => {
                     state.action_items.select_next();
                     return Ok(ShortcutHandlerResponse::StopPropagation);
+                }
+                KeyCode::Char('y') => {
+                    // approve and run
+                    match _approve_and_run(state).await {
+                        Ok(_) => {
+                            state.set_screen(AppScreen::Mission);
+                            state.set_focused_block(FocusedBlock::Message);
+                            state.set_input_value(&FocusedBlock::Message, "");
+                            // _replace_context_files_with_actions(state);
+                            state.set_context_items(vec![]);
+                            state.set_action_items(vec![]);
+                            state.set_header_status(HeaderStatus::SuccessMessage(String::from(
+                                "Mission executed successfully",
+                            )));
+                            return Ok(ShortcutHandlerResponse::StopPropagation);
+                        }
+                        Err(err) => {
+                            state.set_header_status(HeaderStatus::ErrorMessage(err.to_string()));
+                            return Ok(ShortcutHandlerResponse::StopPropagation);
+                        }
+                    }
                 }
                 _ => {}
             },
@@ -96,28 +122,7 @@ impl MissionView {
                 state.set_focused_block(FocusedBlock::Actions);
                 Ok(ShortcutHandlerResponse::StopPropagation)
             }
-            KeyCode::Char('y') => {
-                // approve and run
-                match _approve_and_run(state).await {
-                    Ok(_) => {
-                        state.set_screen(AppScreen::Mission);
-                        state.set_focused_block(FocusedBlock::Message);
-                        state.set_input_value(&FocusedBlock::Message, "");
-                        // _replace_context_files_with_actions(state);
-                        state.set_context_items(vec![]);
-                        state.set_action_items(vec![]);
-                        state.set_header_status(HeaderStatus::SuccessMessage(String::from(
-                            "Mission executed successfully",
-                        )));
-                        // todo: handle rest
-                        Ok(ShortcutHandlerResponse::StopPropagation)
-                    }
-                    Err(err) => {
-                        state.set_header_status(HeaderStatus::ErrorMessage(err.to_string()));
-                        Ok(ShortcutHandlerResponse::StopPropagation)
-                    }
-                }
-            }
+
             _ => Ok(ShortcutHandlerResponse::Continue),
         }
     }
