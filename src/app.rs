@@ -37,6 +37,7 @@ pub struct AppState {
     pub action_items: SelectableList<MissionAction>,
     pub header_status: HeaderStatus,
     pub user_name: String,
+    pub execution_id: Option<String>,
 }
 
 impl AppState {
@@ -68,6 +69,7 @@ impl AppState {
             user_name: String::from("Guest"),
             context_items: SelectableList::new(vec![]),
             action_items: SelectableList::new(vec![]),
+            execution_id: None,
         })
     }
 
@@ -115,6 +117,14 @@ impl AppState {
             self.set_focused_block(FocusedBlock::Actions);
             self.action_items.select(Some(0));
         }
+    }
+
+    pub fn get_current_execution_id(&self) -> Option<String> {
+        self.execution_id.clone()
+    }
+
+    pub fn set_current_execution_id(&mut self, execution_id: String) {
+        self.execution_id = Some(execution_id);
     }
 }
 

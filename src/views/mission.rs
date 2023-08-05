@@ -5,15 +5,18 @@ use crossterm::event::{KeyCode, KeyEvent};
 use lilicore::{
     code_analyst,
     code_missions_api::{
-        self, ApiError, CreateMissionRequest, CreateMissionResponse, ExecuteMissionRequest,
-        MissionData, MissionExecution, MissionExecutionContextFile,
+        self, set_approved, ApiError, CreateMissionRequest, CreateMissionResponse,
+        ExecuteMissionRequest, MissionData, MissionExecution, MissionExecutionContextFile,
+        SetApprovedRequest,
     },
+    coder,
+    git_repo::git_add_temporary_commit,
     io::LocalPath,
 };
 use ratatui::{prelude::*, Frame};
 
 use crate::{
-    app::{AppState, FocusedBlock},
+    app::{AppScreen, AppState, FocusedBlock},
     components::{
         header::{HeaderComponent, HeaderStatus},
         mission::{
@@ -89,6 +92,28 @@ impl MissionView {
                 state.set_focused_block(FocusedBlock::Actions);
                 Ok(ShortcutHandlerResponse::StopPropagation)
             }
+            KeyCode::Char('y') => {
+                // approve and run
+                match _approve_and_run(state).await {
+                    Ok(_) => {
+                        state.set_screen(AppScreen::Mission);
+                        state.set_focused_block(FocusedBlock::Message);
+                        state.set_input_value(&FocusedBlock::Message, "");
+                        // _replace_context_files_with_actions(state);
+                        state.set_context_items(vec![]);
+                        state.set_action_items(vec![]);
+                        state.set_header_status(HeaderStatus::SuccessMessage(String::from(
+                            "Mission executed successfully",
+                        )));
+                        // todo: handle rest
+                        Ok(ShortcutHandlerResponse::StopPropagation)
+                    }
+                    Err(err) => {
+                        state.set_header_status(HeaderStatus::ErrorMessage(err.to_string()));
+                        Ok(ShortcutHandlerResponse::StopPropagation)
+                    }
+                }
+            }
             _ => Ok(ShortcutHandlerResponse::Continue),
         }
     }
@@ -157,6 +182,7 @@ impl MissionView {
         let res_exec = match code_missions_api::execute_mission(req_exec).await {
             Ok(response) => {
                 state.set_header_status(HeaderStatus::Idle);
+                state.set_current_execution_id(response.execution_id.clone());
                 response
             }
             Err(err) => {
@@ -201,6 +227,25 @@ impl MissionView {
         };
         Ok(res_ctx)
     }
+}
+
+async fn _approve_and_run(state: &mut AppState) -> Result<()> {
+    let execution_id = match state.get_current_execution_id() {
+        Some(execution_id) => execution_id,
+        None => {
+            anyhow::bail!("No execution id found");
+        }
+    };
+    let req_approved = SetApprovedRequest { execution_id };
+    match set_approved(req_approved).await {
+        Ok(_) => {}
+        Err(err) => {
+            anyhow::bail!(err.message);
+        }
+    };
+    coder::run_actions(&state.project_dir, &state.action_items.items.as_ref())?;
+    git_add_temporary_commit(&state.project_dir)?;
+    Ok(())
 }
 
 impl AppViewTrait for MissionView {

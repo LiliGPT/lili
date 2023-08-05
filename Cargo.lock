@@ -648,6 +648,7 @@ dependencies = [
 name = "lilicore"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "dotenv",
  "dotenv_codegen",
  "git2",

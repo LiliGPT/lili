@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Mutex};
 
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};
-use lilicore::shell::run_shell_command;
+use lilicore::{code_missions_api::MissionAction, shell::run_shell_command};
 use ratatui::{
     prelude::{Backend, Constraint, Layout, Rect},
     text::{Line, Span},
@@ -50,7 +50,8 @@ impl CommitTempBranchView {
                 let project_dir = &state.project_dir.clone();
                 match git_temporary_branch_destroy(base_branch_name, project_dir) {
                     Ok(output) => {
-                        state.set_header_status(HeaderStatus::SuccessMessage(output));
+                        // no need to do anything here
+                        // state.set_header_status(HeaderStatus::SuccessMessage(output));
                     }
                     Err(err) => {
                         state.set_header_status(HeaderStatus::ErrorMessage(err.to_string()));
@@ -59,6 +60,12 @@ impl CommitTempBranchView {
                 };
                 match git_add_and_commit(message, project_dir) {
                     Ok(output) => {
+                        state.set_screen(AppScreen::Mission);
+                        state.set_focused_block(FocusedBlock::Message);
+                        state.set_input_value(&FocusedBlock::Message, "");
+                        // _replace_context_files_with_actions(state);
+                        state.set_context_items(vec![]);
+                        state.set_action_items(vec![]);
                         state.set_header_status(HeaderStatus::SuccessMessage(output));
                         return Ok(ShortcutHandlerResponse::Mission);
                     }
@@ -77,6 +84,25 @@ impl CommitTempBranchView {
             _ => handle_text_input_event(state, key, &FocusedBlock::CommitMessage),
         }
     }
+}
+
+fn _replace_context_files_with_actions(state: &mut AppState) -> Result<()> {
+    let new_context_files: Vec<(String, String)> = state
+        .action_items
+        .items
+        .iter()
+        .map(|action| {
+            let path = action.path.clone();
+            let content = action.content.clone();
+            (path, content)
+        })
+        .collect::<Vec<(String, String)>>();
+    let new_context_files = new_context_files
+        .iter()
+        .map(|f| (f.0.as_str(), f.1.as_str()))
+        .collect::<Vec<(&str, &str)>>();
+    state.set_context_items(new_context_files);
+    Ok(())
 }
 
 fn git_get_current_branch(project_dir: &str) -> Result<String> {

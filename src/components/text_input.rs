@@ -38,10 +38,6 @@ impl TextInputComponent {
     pub fn unique_name_from_focused_block(focused_block: &FocusedBlock) -> String {
         String::from(format!("TextInput_{}", focused_block.clone() as u8))
     }
-
-    pub fn unique_name(&self) -> String {
-        Self::unique_name_from_focused_block(&self.focus_name)
-    }
 }
 
 impl DrawableComponent for TextInputComponent {
@@ -60,7 +56,7 @@ impl DrawableComponent for TextInputComponent {
         //     .get(&self.unique_name())
         //     .unwrap_or(&String::from(""))
         //     .clone();
-        let value = state.get_input_value_from_focused(state.focused_block.clone());
+        let value = state.get_input_value_from_focused(self.focus_name.clone());
 
         let value = if self.is_password {
             value.chars().map(|_| 'x').collect::<String>()
