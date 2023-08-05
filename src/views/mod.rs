@@ -7,9 +7,11 @@ use ratatui::{
 };
 use std::{any::Any, collections::HashMap, rc::Rc, sync::Mutex};
 
+mod create_temp_branch;
 mod mission;
 mod sign_in;
 
+pub use create_temp_branch::*;
 pub use mission::*;
 pub use sign_in::*;
 
@@ -20,16 +22,12 @@ pub trait AppViewTrait {
         frame: &mut Frame<B>,
         state: &mut AppState,
     ) -> Result<HashMap<String, Rect>>;
-    fn handle_events(
-        &mut self,
-        state: &mut AppState,
-        key: &KeyEvent,
-    ) -> Result<ShortcutHandlerResponse>;
 }
 
 pub enum AppView {
     Mission(MissionView),
     SignIn(SignInView),
+    CreateTempBranch(CreateTempBranchView),
 }
 
 impl AppView {
@@ -37,13 +35,13 @@ impl AppView {
         let components = match self {
             AppView::Mission(view) => view.components(state),
             AppView::SignIn(view) => view.components(state),
-            _ => Ok(HashMap::new()),
+            AppView::CreateTempBranch(view) => view.components(state),
         }?;
 
         let positions = match self {
             AppView::Mission(view) => view.positions(frame, state),
             AppView::SignIn(view) => view.positions(frame, state),
-            _ => Ok(HashMap::new()),
+            AppView::CreateTempBranch(view) => view.positions(frame, state),
         }?;
 
         for (name, component) in components {
@@ -56,15 +54,15 @@ impl AppView {
         Ok(())
     }
 
-    pub fn handle_events(
+    pub async fn handle_events(
         &mut self,
         state: &mut AppState,
         key: &KeyEvent,
     ) -> Result<ShortcutHandlerResponse> {
         return match self {
-            AppView::Mission(view) => view.handle_events(state, &key),
-            AppView::SignIn(view) => view.handle_events(state, &key),
-            _ => Ok(ShortcutHandlerResponse::Continue),
+            AppView::Mission(view) => view.handle_events(state, &key).await,
+            AppView::SignIn(view) => view.handle_events(state, &key).await,
+            AppView::CreateTempBranch(view) => view.handle_events(state, &key).await,
         };
     }
 }

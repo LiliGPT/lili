@@ -1,32 +1,62 @@
+use lilicore::code_missions_api::{MissionAction, MissionActionType};
 use ratatui::widgets::ListItem;
 
-#[derive(Default)]
-pub struct SelectableList {
+#[derive(Debug, Clone, Default)]
+pub struct SelectableList<T: SelectableItem> {
     pub selected_index: Option<usize>,
-    pub items: Vec<(String, String)>,
+    pub items: Vec<T>,
 }
 
-impl SelectableList {
-    pub fn new(items: Vec<(&str, &str)>) -> Self {
-        let items = items
-            .iter()
-            .map(|(name, content)| (name.to_string(), content.to_string()))
-            .collect();
+pub trait SelectableItem {
+    fn to_string(&self) -> String;
+}
+
+impl SelectableItem for (String, String) {
+    fn to_string(&self) -> String {
+        self.0.clone()
+    }
+}
+
+impl SelectableItem for MissionAction {
+    fn to_string(&self) -> String {
+        let path = &self.path;
+        let action_type = match self.action_type {
+            MissionActionType::CreateFile => "+",
+            MissionActionType::UpdateFile => "~",
+            // MissionActionType::DeleteFile => "D",
+        };
+        format!("{} {}", action_type, path)
+    }
+}
+
+impl<T: SelectableItem> SelectableList<T> {
+    pub fn new(items: Vec<T>) -> Self {
         Self {
             items,
             selected_index: Some(0),
         }
     }
 
+    pub fn get_selected_item(&self) -> Option<&T> {
+        match self.selected_index {
+            Some(index) => self.items.get(index),
+            None => None,
+        }
+    }
+
     pub fn to_items(&self) -> Vec<ListItem> {
         self.items
             .iter()
-            .map(|item| ListItem::new(item.0.as_str()))
+            .map(|item| ListItem::new(item.to_string()))
             .collect()
     }
 
-    pub fn add_item(&mut self, key: &str, value: &str) {
-        self.items.push((key.to_string(), value.to_string()));
+    pub fn select(&mut self, index: Option<usize>) {
+        self.selected_index = index;
+    }
+
+    pub fn add_item(&mut self, item: T) {
+        self.items.push(item);
     }
 
     pub fn len(&self) -> u16 {

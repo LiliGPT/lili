@@ -43,25 +43,25 @@ pub fn handle_global_shortcuts(
 pub fn handle_text_input_event(
     state: &mut AppState,
     key: &KeyEvent,
-    unique_name: &str,
+    focus_name: &FocusedBlock,
 ) -> Result<ShortcutHandlerResponse> {
     let current_value = state
         .input_values
-        .get(unique_name)
+        .get(&focus_name.to_string())
         .unwrap_or(&String::new())
         .clone();
 
     if let KeyCode::Char(key) = key.code {
         if key.is_ascii() && !key.is_control() {
             let new_value = format!("{}{}", &current_value, key);
-            state.set_input_value(unique_name, &new_value);
+            state.set_input_value(focus_name, &new_value);
             return Ok(ShortcutHandlerResponse::StopPropagation);
         }
     }
     if let KeyCode::Backspace = key.code {
         if current_value.len() > 0 {
             let new_value = current_value[..current_value.len() - 1].to_string();
-            state.set_input_value(unique_name, &new_value);
+            state.set_input_value(focus_name, &new_value);
             return Ok(ShortcutHandlerResponse::StopPropagation);
         }
     }

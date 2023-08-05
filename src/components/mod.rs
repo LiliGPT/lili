@@ -24,7 +24,7 @@ pub trait DrawableComponent {
 }
 
 pub trait InputComponent {
-    fn unique_name(&self) -> String;
+    // fn unique_name(&self) -> String;
     fn set_value(&mut self, value: String);
     fn value(&self) -> String;
 }
@@ -42,6 +42,7 @@ pub enum AppComponent {
     ProjectInfo(mission::project_info::ProjectInfoComponent),
     Shortcuts(shortcuts::ShortcutsComponent),
     TextInput(text_input::TextInputComponent),
+    ActionPreview(mission::action_preview::ActionPreviewComponent),
 }
 
 impl AppComponent {
@@ -60,6 +61,7 @@ impl AppComponent {
             AppComponent::ProjectInfo(component) => component.draw(state, frame, rect),
             AppComponent::Shortcuts(component) => component.draw(state, frame, rect),
             AppComponent::TextInput(component) => component.draw(state, frame, rect),
+            AppComponent::ActionPreview(component) => component.draw(state, frame, rect),
         }
     }
 }
@@ -79,6 +81,8 @@ impl<B: Backend, TestComponentProps> AppComponentTrait<B, TestComponentProps> fo
 use std::any::Any;
 
 use crate::app::AppState;
+
+use self::mission::actions;
 
 pub struct ComponentB {}
 

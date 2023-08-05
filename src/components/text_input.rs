@@ -12,6 +12,7 @@ pub struct TextInputComponent {
     focus_name: FocusedBlock,
     value: String,
     label: String,
+    is_password: bool,
 }
 
 impl TextInputComponent {
@@ -21,7 +22,13 @@ impl TextInputComponent {
             focus_name,
             value: String::new(),
             label: label.to_string(),
+            is_password: false,
         })
+    }
+
+    pub fn is_password(mut self) -> Self {
+        self.is_password = true;
+        self
     }
 
     pub fn as_mutex(self) -> Mutex<AppComponent> {
@@ -30,6 +37,10 @@ impl TextInputComponent {
 
     pub fn unique_name_from_focused_block(focused_block: &FocusedBlock) -> String {
         String::from(format!("TextInput_{}", focused_block.clone() as u8))
+    }
+
+    pub fn unique_name(&self) -> String {
+        Self::unique_name_from_focused_block(&self.focus_name)
     }
 }
 
@@ -50,6 +61,12 @@ impl DrawableComponent for TextInputComponent {
             .unwrap_or(&String::from(""))
             .clone();
 
+        let value = if self.is_password {
+            value.chars().map(|_| 'x').collect::<String>()
+        } else {
+            value
+        };
+
         let mut message = ratatui::widgets::Paragraph::new(value)
             .alignment(ratatui::prelude::Alignment::Left)
             .wrap(ratatui::widgets::Wrap { trim: true });
@@ -68,10 +85,6 @@ impl DrawableComponent for TextInputComponent {
 }
 
 impl InputComponent for TextInputComponent {
-    fn unique_name(&self) -> String {
-        Self::unique_name_from_focused_block(&self.focus_name)
-    }
-
     fn set_value(&mut self, value: String) {
         self.value = value;
     }

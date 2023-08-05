@@ -12,36 +12,24 @@ use crate::app::AppState;
 
 use super::{AppComponent, DrawableComponent};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub enum HeaderStatus {
+    #[default]
     Idle,
     Loading,
+    ErrorMessage(String),
+    LoadingMessage(String),
 }
 
-pub struct HeaderComponent {
-    pub project_name: String,
-    status: HeaderStatus,
-}
+pub struct HeaderComponent;
 
 impl HeaderComponent {
-    pub fn new(project_name: String) -> Result<Self> {
-        let status = HeaderStatus::Idle;
-        Ok(Self {
-            project_name,
-            status,
-        })
+    pub fn new() -> Result<Self> {
+        Ok(Self {})
     }
 
     pub fn as_mutex(self) -> Mutex<AppComponent> {
         Mutex::new(AppComponent::Header(self))
-    }
-
-    pub fn set_status(&mut self, status: HeaderStatus) {
-        self.status = status;
-    }
-
-    pub fn get_status(&self) -> HeaderStatus {
-        self.status.clone()
     }
 }
 
@@ -54,24 +42,39 @@ impl DrawableComponent for HeaderComponent {
     ) -> Result<()> {
         let mut texts: Vec<Span> = vec![];
         texts.push(Span::styled(
-            format!("{} ", self.project_name),
+            state.project_dir.split("/").last().unwrap(),
             ratatui::style::Style::default().fg(ratatui::style::Color::DarkGray),
         ));
         texts.push(Span::raw("        "));
         texts.push(Span::raw("        "));
-        texts.push(Span::raw("        "));
 
-        let loading_text = match self.status {
+        let loading_text = match state.header_status {
             HeaderStatus::Idle => "Idle",
             HeaderStatus::Loading => "Loading",
+            HeaderStatus::ErrorMessage(ref msg) => msg,
+            HeaderStatus::LoadingMessage(ref msg) => msg,
         };
-        let loading_color = match self.status {
+        let loading_color = match state.header_status {
             HeaderStatus::Idle => ratatui::style::Color::DarkGray,
             HeaderStatus::Loading => ratatui::style::Color::Cyan,
+            HeaderStatus::ErrorMessage(_) => ratatui::style::Color::Red,
+            HeaderStatus::LoadingMessage(_) => ratatui::style::Color::LightCyan,
+        };
+        let prefix_text = match state.header_status {
+            HeaderStatus::Idle => "*",
+            HeaderStatus::Loading => "*",
+            HeaderStatus::ErrorMessage(_) => "Error:",
+            HeaderStatus::LoadingMessage(_) => "Loading:",
         };
         texts.push(Span::styled(
-            format!("* {}", loading_text),
+            format!("{} {}", prefix_text, loading_text),
             ratatui::style::Style::default().fg(loading_color),
+        ));
+        texts.push(Span::raw("        "));
+        texts.push(Span::raw("        "));
+        texts.push(Span::styled(
+            format!("{}", state.user_name),
+            ratatui::style::Style::default().fg(ratatui::style::Color::DarkGray),
         ));
         let header = Paragraph::new(Line::from(texts))
             .block(Block::default().borders(Borders::NONE))

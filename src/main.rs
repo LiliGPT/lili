@@ -15,7 +15,8 @@ use crossterm::{
 };
 use ratatui::{prelude::*, widgets::*};
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -32,7 +33,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // create app and run it
     let state = Mutex::new(AppState::new(project_dir)?);
     let mut app = App::new(state)?;
-    let res = run_app(&mut terminal, &mut app);
+    let res = run_app(&mut terminal, &mut app).await;
 
     // restore terminal
     disable_raw_mode()?;
@@ -50,13 +51,29 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<()> {
-    loop {
-        terminal.draw(|f| {
-            app.draw(f).unwrap();
-        })?;
+fn draw_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<()> {
+    terminal.draw(|f| {
+        app.draw(f).unwrap();
+    })?;
 
-        match app.handle_events()? {
+    Ok(())
+}
+
+pub fn redraw_app(state: &mut AppState) {
+    let state = Mutex::new(state.clone());
+    let mut app = App::new(state).unwrap();
+    let stdout = io::stdout();
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend).unwrap();
+    terminal.clear();
+    draw_app(&mut terminal, &mut app).unwrap();
+}
+
+async fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<()> {
+    loop {
+        draw_app(terminal, app)?;
+
+        match app.handle_events().await? {
             true => return Ok(()),
             false => continue,
         }

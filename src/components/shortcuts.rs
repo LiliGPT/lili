@@ -24,6 +24,25 @@ impl ShortcutsComponent {
     }
 
     fn get_shortcuts(&self, screen: &AppScreen, focused_block: &FocusedBlock) -> Vec<(&str, &str)> {
+        match screen {
+            AppScreen::SignIn => {
+                return vec![
+                    ("Esc", "exit"),
+                    ("Tab", "next field"),
+                    ("Shift+Tab", "previous field"),
+                    ("Enter", "submit"),
+                ];
+            }
+            AppScreen::CreateTempBranch => {
+                return vec![
+                    ("Esc", "do NOT create branch"),
+                    ("Enter", "create"),
+                    ("q", "quit"),
+                ];
+            }
+            _ => {}
+        }
+
         match focused_block {
             FocusedBlock::Home => {
                 return vec![
@@ -36,18 +55,7 @@ impl ShortcutsComponent {
                 ]
             }
             FocusedBlock::Message => return vec![("Esc", "exit"), ("Enter", "send")],
-            _ => {}
-        }
-
-        match screen {
-            AppScreen::SignIn => {
-                return vec![
-                    ("Esc", "exit"),
-                    ("Tab", "next field"),
-                    ("Shift+Tab", "previous field"),
-                    ("Enter", "submit"),
-                ]
-            }
+            FocusedBlock::Actions => return vec![("a", "approve and run"), ("x", "cancel")],
             _ => {}
         }
 
