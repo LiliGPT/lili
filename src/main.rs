@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         None => std::env::current_dir()?.to_str().unwrap().to_string(),
     };
     // create app and run it
-    let state = Mutex::new(AppState::new(project_dir)?);
+    let state = Mutex::new(AppState::new(project_dir).await?);
     let mut app = App::new(state)?;
     let res = run_app(&mut terminal, &mut app).await;
 

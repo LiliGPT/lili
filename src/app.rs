@@ -3,6 +3,7 @@ use std::{collections::HashMap, sync::Mutex};
 use anyhow::Result;
 use crossterm::event::{self, Event};
 use lilicore::{
+    auth::{auth_introspect_token, KeycloakDecodedAccessToken},
     code_analyst::{self, project_files::get_project_files},
     code_missions_api::{MissionAction, MissionActionType},
     configjson, git_repo,
@@ -65,7 +66,7 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(project_dir: String) -> Result<Self> {
+    pub async fn new(project_dir: String) -> Result<Self> {
         // let mocked_action_items: Vec<MissionAction> = vec![
         //     MissionAction {
         //         path: String::from("/test1"),
@@ -90,14 +91,42 @@ impl AppState {
         } else {
             AppScreen::CreateTempBranch
         };
+        let mut signed_in = false;
+        let mut user_name = String::from("Guest");
+        let access_token = configjson::get("access_token");
+        if access_token.clone().is_some() {
+            let access_token = access_token.unwrap().clone();
+            // validate access token
+            let introspected = auth_introspect_token(&access_token).await;
+            match introspected {
+                Ok(introspected) => {
+                    if introspected.active {
+                        signed_in = true;
+                    }
+                }
+                Err(_err) => {
+                    // user is not signed in
+                }
+            };
+
+            // get user name from current access token
+            if signed_in.clone() {
+                let decoded = KeycloakDecodedAccessToken::new(&access_token).ok();
+                if decoded.is_some() {
+                    let decoded = decoded.unwrap();
+                    user_name = decoded.get_user_name().unwrap_or(String::from("Guest"));
+                    // signed_in = true;
+                }
+            }
+        }
         Ok(Self {
             project_dir,
             screen,
             focused_block: FocusedBlock::default(),
-            signed_in: false,
+            signed_in,
             header_status: HeaderStatus::default(),
             input_values: HashMap::new(),
-            user_name: String::from("Guest"),
+            user_name,
             context_items: SelectableList::new(vec![]),
             action_items: SelectableList::new(vec![]),
             execution_id: None,

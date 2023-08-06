@@ -120,11 +120,12 @@ impl MissionView {
                     match _approve_and_run(state).await {
                         Ok(_) => {
                             state.set_screen(AppScreen::Mission);
-                            state.set_focused_block(FocusedBlock::Message);
+                            state.set_focused_block(FocusedBlock::Home);
                             state.set_input_value(&FocusedBlock::Message, "");
+                            state.set_current_execution_id(None);
                             // _replace_context_files_with_actions(state);
-                            state.set_context_items(vec![]);
-                            state.set_action_items(vec![]);
+                            // state.set_context_items(vec![]);
+                            // state.set_action_items(vec![]);
                             state.set_header_status(HeaderStatus::SuccessMessage(String::from(
                                 "Mission executed successfully",
                             )));
