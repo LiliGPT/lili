@@ -5,9 +5,9 @@ use crossterm::event::{KeyCode, KeyEvent};
 use lilicore::{
     code_analyst,
     code_missions_api::{
-        self, set_approved, ApiError, CreateMissionRequest, CreateMissionResponse,
-        ExecuteMissionRequest, MissionData, MissionExecution, MissionExecutionContextFile,
-        SetApprovedRequest,
+        self, set_approved, ApiError, CodeMissionStatus, CreateMissionRequest,
+        CreateMissionResponse, ExecuteMissionRequest, MissionData, MissionExecution,
+        MissionExecutionContextFile, MissionExecutionStatus, SetApprovedRequest,
     },
     coder,
     git_repo::git_add_temporary_commit,
@@ -47,10 +47,11 @@ impl MissionView {
         match &state.focused_block {
             FocusedBlock::Message => {
                 if let KeyCode::Enter = key.code {
-                    // state.set_focused_block(FocusedBlock::Home);
-                    // state.set_input_value("message", "");
-                    // return Ok(ShortcutHandlerResponse::StopPropagation);
-                    return self.send_message(state).await;
+                    let should_generate_context = match state.context_items.items.len() {
+                        0 => true,
+                        _ => false,
+                    };
+                    return self.send_message(state, should_generate_context).await;
                 }
                 return handle_text_input_event(state, key, &FocusedBlock::Message);
             }
@@ -104,6 +105,17 @@ impl MissionView {
                         }
                     }
                 }
+                KeyCode::Char('x') => {
+                    // cancel
+                    // todo: reprove execution
+                    state.set_screen(AppScreen::Mission);
+                    state.set_focused_block(FocusedBlock::Home);
+                    state.set_input_value(&FocusedBlock::Message, "");
+                    state.set_action_items(vec![]);
+                    state.set_header_status(HeaderStatus::Idle);
+                    state.set_current_execution_id(None);
+                    return Ok(ShortcutHandlerResponse::StopPropagation);
+                }
                 _ => {}
             },
             _ => {}
@@ -127,7 +139,11 @@ impl MissionView {
         }
     }
 
-    async fn send_message(&mut self, state: &mut AppState) -> Result<ShortcutHandlerResponse> {
+    async fn send_message(
+        &mut self,
+        state: &mut AppState,
+        generate_context: bool,
+    ) -> Result<ShortcutHandlerResponse> {
         let pathinfo = code_analyst::get_path_info(&state.project_dir).unwrap_or_default();
         let message = state.get_input_value_from_focused(FocusedBlock::Message);
         let mission_data = MissionData {
@@ -147,12 +163,24 @@ impl MissionView {
             )));
             return Ok(ShortcutHandlerResponse::StopPropagation);
         }
-        let res_ctx = match self.generate_context_files(state, &mission_data).await {
-            Ok(res_ctx) => res_ctx,
-            Err(err) => {
-                state.set_header_status(HeaderStatus::ErrorMessage(err.message));
-                return Ok(ShortcutHandlerResponse::StopPropagation);
-            }
+        let res_ctx = match generate_context {
+            true => match self.generate_context_files(state, &mission_data).await {
+                Ok(res_ctx) => res_ctx,
+                Err(err) => {
+                    state.set_header_status(HeaderStatus::ErrorMessage(err.message));
+                    return Ok(ShortcutHandlerResponse::StopPropagation);
+                }
+            },
+            false => CreateMissionResponse {
+                mission_id: String::from(""), // todo: does this throws an error? should be optional?
+                context_files: state
+                    .context_items
+                    .items
+                    .iter()
+                    .map(|(k, _)| k.clone())
+                    .collect(),
+                mission_status: CodeMissionStatus::Created,
+            },
         };
         let res_exec = match self.execute_mission(state, mission_data, res_ctx).await {
             Ok(res_exec) => res_exec,
@@ -191,7 +219,7 @@ impl MissionView {
         let res_exec = match code_missions_api::execute_mission(req_exec).await {
             Ok(response) => {
                 state.set_header_status(HeaderStatus::Idle);
-                state.set_current_execution_id(response.execution_id.clone());
+                state.set_current_execution_id(Some(response.execution_id.clone()));
                 response
             }
             Err(err) => {

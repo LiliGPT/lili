@@ -154,8 +154,8 @@ impl AppState {
         self.execution_id.clone()
     }
 
-    pub fn set_current_execution_id(&mut self, execution_id: String) {
-        self.execution_id = Some(execution_id);
+    pub fn set_current_execution_id(&mut self, execution_id: Option<String>) {
+        self.execution_id = execution_id;
     }
 
     pub fn get_project_files(&mut self) -> Result<Vec<String>> {

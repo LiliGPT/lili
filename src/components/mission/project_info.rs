@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 
 use anyhow::Result;
-use lilicore::code_analyst;
+use lilicore::{code_analyst, git_repo::get_current_branch_name};
 use ratatui::{
     prelude::{Backend, Rect},
     text::{Line, Span, Spans},
@@ -59,11 +59,16 @@ impl DrawableComponent for ProjectInfoComponent {
                 "No"
             }
         ))]);
+        let branch_line = Line::from(vec![Span::raw(format!(
+            "Current Branch: {}",
+            get_current_branch_name(&state.project_dir.clone())?
+        ))]);
         let widget = Paragraph::new(vec![
             project_dir_line,
             language_line,
             framework_line,
             dependencies_line,
+            branch_line,
         ])
         .block(block);
         frame.render_widget(widget, rect);

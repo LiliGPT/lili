@@ -70,6 +70,8 @@ impl SignInView {
         };
         let name = decoded.given_name;
         state.set_user_name(name);
+        state.set_screen(AppScreen::Mission);
+        state.set_focused_block(FocusedBlock::Home);
         return Ok(ShortcutHandlerResponse::StopPropagation);
     }
 

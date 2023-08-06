@@ -49,6 +49,7 @@ impl ShortcutsComponent {
                     ("i", "create mission"),
                     ("c", "context"),
                     ("a", "actions"),
+                    ("l", "login"),
                     (".", "commit temp branch"),
                     ("q", "quit"),
                     // ("r", "reset"),
