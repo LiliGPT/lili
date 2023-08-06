@@ -53,7 +53,7 @@ impl DrawableComponent for ProjectInfoComponent {
         ))]);
         let dependencies_line = Line::from(vec![Span::raw(format!(
             "Dependencies Installed: {}",
-            if pathinfo.dependencies_installed {
+            if pathinfo.dependencies_installed.clone().unwrap_or(false) {
                 "Yes"
             } else {
                 "No"
@@ -67,15 +67,17 @@ impl DrawableComponent for ProjectInfoComponent {
             "Current Branch: {}",
             get_current_branch_name(&state.project_dir.clone())?
         ))]);
-        let widget = Paragraph::new(vec![
+        let mut plines = vec![
             project_dir_line,
             language_line,
             framework_line,
-            dependencies_line,
             base_branch_line,
             current_branch_line,
-        ])
-        .block(block);
+        ];
+        if pathinfo.dependencies_installed.clone().is_some() {
+            plines.push(dependencies_line);
+        }
+        let widget = Paragraph::new(plines).block(block);
         frame.render_widget(widget, rect);
         Ok(())
     }
