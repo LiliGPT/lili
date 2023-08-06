@@ -59,7 +59,11 @@ impl DrawableComponent for ProjectInfoComponent {
                 "No"
             }
         ))]);
-        let branch_line = Line::from(vec![Span::raw(format!(
+        let base_branch_line = Line::from(vec![Span::raw(format!(
+            "Base Branch: {}",
+            state.get_base_branch_name().unwrap_or_default()
+        ))]);
+        let current_branch_line = Line::from(vec![Span::raw(format!(
             "Current Branch: {}",
             get_current_branch_name(&state.project_dir.clone())?
         ))]);
@@ -68,7 +72,8 @@ impl DrawableComponent for ProjectInfoComponent {
             language_line,
             framework_line,
             dependencies_line,
-            branch_line,
+            base_branch_line,
+            current_branch_line,
         ])
         .block(block);
         frame.render_widget(widget, rect);

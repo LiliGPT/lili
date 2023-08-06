@@ -59,9 +59,21 @@ impl ShortcutsComponent {
                 ];
             }
             FocusedBlock::Message => return vec![("Esc", "exit"), ("Enter", "send")],
-            FocusedBlock::Actions => return vec![("y", "approve and run"), ("x", "cancel")],
+            FocusedBlock::Actions => {
+                return vec![
+                    ("y", "approve and run"),
+                    ("x", "cancel"),
+                    ("o", "open file"),
+                ]
+            }
             FocusedBlock::ContextFiles => {
-                return vec![("p", "pick files"), ("d", "remove from context")]
+                return vec![
+                    ("p", "pick files"),
+                    ("d", "remove from context"),
+                    ("x", "clear context"),
+                    ("t", "copy actions"),
+                    ("o", "open file"),
+                ]
             }
             _ => {}
         }

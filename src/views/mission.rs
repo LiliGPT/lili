@@ -73,6 +73,37 @@ impl MissionView {
                     state.set_focused_block(FocusedBlock::SearchContextFileInput);
                     return Ok(ShortcutHandlerResponse::StopPropagation);
                 }
+                KeyCode::Char('x') => {
+                    state.set_context_items(vec![]);
+                    return Ok(ShortcutHandlerResponse::StopPropagation);
+                }
+                KeyCode::Char('t') => {
+                    let current_context_items = state.context_items.items.clone();
+                    let action_context_items = state
+                        .action_items
+                        .items
+                        .clone()
+                        .iter()
+                        .map(|mission| (mission.path.to_string(), mission.content.to_string()))
+                        .collect::<Vec<(String, String)>>();
+                    let merged = current_context_items
+                        .iter()
+                        .chain(action_context_items.iter())
+                        .map(|(k, v)| (k.as_str(), v.as_str()))
+                        .collect::<Vec<(&str, &str)>>();
+                    state.set_context_items(merged);
+                    return Ok(ShortcutHandlerResponse::StopPropagation);
+                }
+                KeyCode::Char('o') => {
+                    let current_context = state.context_items.get_selected_item();
+                    let file_path = match current_context {
+                        Some(file_path) => file_path.0.clone(),
+                        None => {
+                            return Ok(ShortcutHandlerResponse::StopPropagation);
+                        }
+                    };
+                    coder::open_file_in_editor(&state.project_dir, &file_path).ok();
+                }
                 _ => {}
             },
             FocusedBlock::Actions => match key.code {
@@ -115,6 +146,22 @@ impl MissionView {
                     state.set_header_status(HeaderStatus::Idle);
                     state.set_current_execution_id(None);
                     return Ok(ShortcutHandlerResponse::StopPropagation);
+                }
+                KeyCode::Char('o') => {
+                    let current_action = state.action_items.get_selected_item();
+                    let file_path = match current_action {
+                        Some(action) => action.path.clone(),
+                        None => {
+                            return Ok(ShortcutHandlerResponse::StopPropagation);
+                        }
+                    };
+                    match coder::open_file_in_editor(&state.project_dir, &file_path) {
+                        Ok(_) => {}
+                        Err(err) => {
+                            state.set_header_status(HeaderStatus::ErrorMessage(err.to_string()));
+                            return Ok(ShortcutHandlerResponse::StopPropagation);
+                        }
+                    };
                 }
                 _ => {}
             },

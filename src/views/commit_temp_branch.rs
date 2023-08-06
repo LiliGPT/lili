@@ -3,7 +3,8 @@ use std::{collections::HashMap, sync::Mutex};
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use lilicore::{
-    code_missions_api::MissionAction, git_repo::get_current_branch_name, shell::run_shell_command,
+    code_missions_api::MissionAction, configjson, git_repo::get_current_branch_name,
+    shell::run_shell_command,
 };
 use ratatui::{
     prelude::{Backend, Constraint, Layout, Rect},
@@ -47,19 +48,26 @@ impl CommitTempBranchView {
                     ));
                     return Ok(ShortcutHandlerResponse::StopPropagation);
                 }
-
-                let base_branch_name = "master";
+                let base_branch_name = match state.get_base_branch_name() {
+                    Some(branch_name) => branch_name,
+                    None => {
+                        state.set_header_status(HeaderStatus::ErrorMessage(
+                            "Could not find base branch name".to_string(),
+                        ));
+                        return Ok(ShortcutHandlerResponse::StopPropagation);
+                    }
+                };
                 let project_dir = &state.project_dir.clone();
-                match git_temporary_branch_destroy(base_branch_name, project_dir) {
-                    Ok(output) => {
+                match git_temporary_branch_destroy(&base_branch_name, project_dir) {
+                    Ok(_) => {
                         // no need to do anything here
-                        // state.set_header_status(HeaderStatus::SuccessMessage(output));
                     }
                     Err(err) => {
                         state.set_header_status(HeaderStatus::ErrorMessage(err.to_string()));
                         return Ok(ShortcutHandlerResponse::StopPropagation);
                     }
                 };
+                state.delete_base_branch_name().ok();
                 match git_add_and_commit(message, project_dir) {
                     Ok(output) => {
                         state.set_screen(AppScreen::Mission);
@@ -108,8 +116,7 @@ fn _replace_context_files_with_actions(state: &mut AppState) -> Result<()> {
     Ok(())
 }
 
-fn git_temporary_branch_destroy(base_branch_name: &str, project_dir: &str) -> Result<String> {
-    // todo: save branch name in state
+fn git_temporary_branch_destroy(base_branch_name: &str, project_dir: &str) -> Result<()> {
     let temp_branch_name = &get_current_branch_name(project_dir)?;
     if !temp_branch_name.starts_with("temp-") {
         anyhow::bail!("not a temp branch");
@@ -121,6 +128,8 @@ fn git_temporary_branch_destroy(base_branch_name: &str, project_dir: &str) -> Re
     _run_shell_command(&format!("git checkout {}", base_branch_name), project_dir)
         .unwrap_or(String::new());
     _run_shell_command(&format!("git branch -d {}", temp_branch_name), project_dir)
+        .unwrap_or(String::new());
+    Ok(())
 }
 
 fn git_add_and_commit(message: &str, project_dir: &str) -> Result<String> {

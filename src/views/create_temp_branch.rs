@@ -70,6 +70,11 @@ impl CreateTempBranchView {
 }
 
 fn git_temporary_branch_create(state: &mut AppState) -> Result<String> {
+    let current_branch_name = get_current_branch_name(&state.project_dir)?;
+    if current_branch_name.clone().starts_with("temp-") {
+        anyhow::bail!("You are already on a temporary branch");
+    }
+    state.set_base_branch_name(&current_branch_name)?;
     // let branch_name = "master";
     let now_str = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)?

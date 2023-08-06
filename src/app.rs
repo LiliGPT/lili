@@ -5,7 +5,7 @@ use crossterm::event::{self, Event};
 use lilicore::{
     code_analyst::{self, project_files::get_project_files},
     code_missions_api::{MissionAction, MissionActionType},
-    git_repo,
+    configjson, git_repo,
     io::LocalPath,
 };
 use ratatui::{
@@ -61,7 +61,7 @@ pub struct AppState {
     pub header_status: HeaderStatus,
     pub user_name: String,
     pub execution_id: Option<String>,
-    pub base_branch_name: String,
+    // pub base_branch_name: String,
 }
 
 impl AppState {
@@ -83,8 +83,9 @@ impl AppState {
         //         action_type: MissionActionType::UpdateFile,
         //     },
         // ];
-        let base_branch_name = git_repo::get_current_branch_name(&project_dir)?;
-        let screen = if base_branch_name.clone().starts_with("temp-") {
+        // let base_branch_name = git_repo::get_current_branch_name(&project_dir)?;
+        let current_branch_name = git_repo::get_current_branch_name(&project_dir)?;
+        let screen = if current_branch_name.clone().starts_with("temp-") {
             AppScreen::default()
         } else {
             AppScreen::CreateTempBranch
@@ -100,7 +101,7 @@ impl AppState {
             context_items: SelectableList::new(vec![]),
             action_items: SelectableList::new(vec![]),
             execution_id: None,
-            base_branch_name,
+            // base_branch_name: current_branch_name,
         })
     }
 
@@ -171,6 +172,31 @@ impl AppState {
         let framework = &path_info.framework;
         let project_files = get_project_files(project_dir_path, code_language, framework);
         Ok(project_files)
+    }
+
+    pub fn get_base_branch_name(&self) -> Option<String> {
+        let key = format!("base_branch_name_{}", self.project_dir);
+        configjson::get(&key)
+    }
+
+    pub fn set_base_branch_name(&self, base_branch_name: &str) -> Result<()> {
+        let key = format!("base_branch_name_{}", self.project_dir);
+        match configjson::set(&key, base_branch_name) {
+            Ok(_) => Ok(()),
+            Err(err) => {
+                anyhow::bail!("Failed to set base branch name: {:?}", err);
+            }
+        }
+    }
+
+    pub fn delete_base_branch_name(&self) -> Result<()> {
+        let key = format!("base_branch_name_{}", self.project_dir);
+        match configjson::delete(&key) {
+            Ok(_) => Ok(()),
+            Err(err) => {
+                anyhow::bail!("Failed to delete base branch name: {:?}", err);
+            }
+        }
     }
 }
 

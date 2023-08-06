@@ -44,6 +44,16 @@ pub fn handle_global_shortcuts(
     }
 
     if let KeyCode::Char('.') = key.code {
+        let base_branch_name = state.get_base_branch_name();
+        if base_branch_name.is_none() {
+            // state.set_header_status(HeaderStatus::ErrorMessage(
+            //     "Could not find base branch name".to_string(),
+            // ));
+            state.set_screen(AppScreen::CreateTempBranch);
+            state.set_focused_block(FocusedBlock::Home);
+            state.set_header_status(HeaderStatus::Idle);
+            return Ok(ShortcutHandlerResponse::StopPropagation);
+        }
         state.set_screen(AppScreen::CommitTempBranch);
         state.set_focused_block(FocusedBlock::CommitMessage);
         state.set_header_status(HeaderStatus::Idle);
