@@ -164,6 +164,17 @@ impl MissionView {
                         }
                     };
                 }
+                KeyCode::Char(' ') => {
+                    let current_action = state.action_items.get_selected_item();
+                    let file_path = match current_action {
+                        Some(action) => action.path.clone(),
+                        None => {
+                            return Ok(ShortcutHandlerResponse::StopPropagation);
+                        }
+                    };
+                    state.context_items.add_item((file_path, String::from("")));
+                    return Ok(ShortcutHandlerResponse::StopPropagation);
+                }
                 _ => {}
             },
             _ => {}

@@ -64,6 +64,7 @@ impl ShortcutsComponent {
                     ("y", "approve and run"),
                     ("x", "cancel"),
                     ("o", "open file"),
+                    ("Space", "add to context"),
                 ]
             }
             FocusedBlock::ContextFiles => {
