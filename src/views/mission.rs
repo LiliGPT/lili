@@ -10,7 +10,7 @@ use lilicore::{
         MissionExecutionContextFile, MissionExecutionStatus, SetApprovedRequest,
     },
     coder,
-    git_repo::git_add_temporary_commit,
+    git_repo::{git_add_temporary_commit, git_undo_last_commit},
     io::LocalPath,
 };
 use ratatui::{prelude::*, Frame};
@@ -193,7 +193,19 @@ impl MissionView {
                 state.set_focused_block(FocusedBlock::Actions);
                 Ok(ShortcutHandlerResponse::StopPropagation)
             }
-
+            KeyCode::Char('u') => {
+                match git_undo_last_commit(&state.project_dir) {
+                    Ok(_) => {
+                        state.set_header_status(HeaderStatus::SuccessMessage(String::from(
+                            "Last commit undone",
+                        )));
+                    }
+                    Err(err) => {
+                        state.set_header_status(HeaderStatus::ErrorMessage(err.to_string()));
+                    }
+                }
+                Ok(ShortcutHandlerResponse::StopPropagation)
+            }
             _ => Ok(ShortcutHandlerResponse::Continue),
         }
     }

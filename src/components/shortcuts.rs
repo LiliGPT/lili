@@ -52,6 +52,7 @@ impl ShortcutsComponent {
                     ("l", "login"),
                     (".", "commit temp branch"),
                     ("q", "quit"),
+                    ("u", "undo last commit"),
                     // ("r", "reset"),
                     // ("g", "git"),
                     // ("s", "settings"),
