@@ -10,7 +10,6 @@ pub mod button;
 pub mod header;
 pub mod mission;
 pub mod shortcuts;
-pub mod sign_in;
 pub mod text_input;
 
 pub trait DrawableComponent {

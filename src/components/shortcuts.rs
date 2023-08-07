@@ -50,6 +50,7 @@ impl ShortcutsComponent {
                     ("c", "context"),
                     ("a", "actions"),
                     ("l", "login"),
+                    ("L", "signup"),
                     (".", "commit temp branch"),
                     ("q", "quit"),
                     ("u", "undo last commit"),

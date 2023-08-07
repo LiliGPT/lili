@@ -16,3 +16,5 @@ strum = { version = "0.25.0", features = ["strum_macros"] }
 lilicore = { path = "../core" }
 tokio = { version = "1.29.1", features = ["full"] }
 jsonwebtoken = "8.3.0"
+url-escape = "0.1.1"
+open = "5.0.0"

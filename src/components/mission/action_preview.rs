@@ -8,7 +8,7 @@ use ratatui::{
 };
 
 use crate::{
-    app::AppState,
+    app::{AppState, FocusedBlock},
     components::{AppComponent, DrawableComponent},
 };
 
@@ -22,6 +22,30 @@ impl ActionPreviewComponent {
     pub fn as_mutex(self) -> Mutex<AppComponent> {
         Mutex::new(AppComponent::ActionPreview(self))
     }
+
+    fn get_content(&self, state: &mut AppState) -> String {
+        match state.focused_block.clone() {
+            FocusedBlock::Actions => {
+                let action = match state.action_items.get_selected_item() {
+                    Some(action) => action,
+                    None => return String::new(),
+                };
+
+                return action.content.clone();
+            }
+            FocusedBlock::ContextFiles => {
+                let context_file = match state.context_items.get_selected_item() {
+                    Some(item) => item.0.clone(),
+                    None => return String::new(),
+                };
+                let file_content =
+                    std::fs::read_to_string(format!("{}/{}", &state.project_dir, context_file))
+                        .unwrap_or_default();
+                return file_content;
+            }
+            _ => return String::new(),
+        };
+    }
 }
 
 impl DrawableComponent for ActionPreviewComponent {
@@ -31,16 +55,17 @@ impl DrawableComponent for ActionPreviewComponent {
         frame: &mut Frame<B>,
         rect: Rect,
     ) -> Result<()> {
-        let action = match state.action_items.get_selected_item() {
-            Some(action) => action,
-            None => return Ok(()),
-        };
+        // let action = match state.action_items.get_selected_item() {
+        //     Some(action) => action,
+        //     None => return Ok(()),
+        // };
+        let content = self.get_content(state);
 
         let block = ratatui::widgets::Block::default()
             .borders(ratatui::widgets::Borders::ALL)
             .title("Action Preview");
 
-        let text = ratatui::widgets::Paragraph::new(action.content.clone()).block(block);
+        let text = ratatui::widgets::Paragraph::new(content).block(block);
 
         frame.render_widget(text, rect);
 
@@ -48,9 +73,9 @@ impl DrawableComponent for ActionPreviewComponent {
     }
 }
 
-fn action_get_newest_content(action: &MissionAction) -> &str {
-    action.content.split('\n').last().unwrap_or(&action.content)
-}
+// fn action_get_newest_content(action: &MissionAction) -> &str {
+//     action.content.split('\n').last().unwrap_or(&action.content)
+// }
 
 // fn action_get_original_content(action: &MissionAction, state: &mut AppState) -> String {
 //     let path = &action.path;

@@ -1,5 +1,6 @@
 use anyhow::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
+use lilicore::shell::run_shell_command;
 
 use crate::{
     app::{AppScreen, AppState, FocusedBlock},
@@ -30,6 +31,19 @@ pub fn handle_global_shortcuts(
     }
 
     if let KeyCode::Char('l') = key.code {
+        state.set_screen(AppScreen::SignIn);
+        state.set_focused_block(FocusedBlock::UsernameInput);
+        state.set_header_status(HeaderStatus::Idle);
+        return Ok(ShortcutHandlerResponse::SignIn);
+    }
+
+    if let KeyCode::Char('L') = key.code {
+        // todo: open browser cross platform
+        let register_url = format!(
+            "start https://liligpt-auth.giovannefeitosa.com/auth/realms/liligpt/protocol/openid-connect/registrations?{}",
+            "client_id=liligpt_backend\"&\"response_type=code\"&\"redirect_uri=https%3A%2F%2Fwww.google.com\"&\"kc_locale=br",
+        );
+        open::with(register_url, "powershell.exe")?;
         state.set_screen(AppScreen::SignIn);
         state.set_focused_block(FocusedBlock::UsernameInput);
         state.set_header_status(HeaderStatus::Idle);

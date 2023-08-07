@@ -5,7 +5,7 @@ use crossterm::event::{self, Event};
 use lilicore::{
     auth::{auth_introspect_token, KeycloakDecodedAccessToken},
     code_analyst::{self, project_files::get_project_files},
-    code_missions_api::{MissionAction, MissionActionType},
+    code_missions_api::{set_fail, MissionAction, MissionActionType, SetFailRequest},
     configjson, git_repo,
     io::LocalPath,
 };
@@ -226,6 +226,18 @@ impl AppState {
                 anyhow::bail!("Failed to delete base branch name: {:?}", err);
             }
         }
+    }
+
+    pub async fn set_execution_fail(&self) -> Result<()> {
+        if let Some(execution_id) = self.execution_id.clone() {
+            match set_fail(SetFailRequest { execution_id }).await {
+                Ok(_) => return Ok(()),
+                Err(err) => {
+                    anyhow::bail!("Failed to fail execution: {:?}", err.message);
+                }
+            };
+        }
+        anyhow::bail!("No execution running");
     }
 }
 

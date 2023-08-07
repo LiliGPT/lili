@@ -5,12 +5,15 @@ use crossterm::event::{KeyCode, KeyEvent};
 use lilicore::{
     code_analyst,
     code_missions_api::{
-        self, set_approved, ApiError, CodeMissionStatus, CreateMissionRequest,
+        self, set_approved, set_fail, ApiError, CodeMissionStatus, CreateMissionRequest,
         CreateMissionResponse, ExecuteMissionRequest, MissionData, MissionExecution,
-        MissionExecutionContextFile, MissionExecutionStatus, SetApprovedRequest,
+        MissionExecutionContextFile, MissionExecutionStatus, SetApprovedRequest, SetFailRequest,
     },
     coder,
-    git_repo::{git_add_temporary_commit, git_undo_last_commit},
+    git_repo::{
+        get_current_branch_name, get_last_commit_message, git_add_temporary_commit,
+        git_undo_last_commit,
+    },
     io::LocalPath,
 };
 use ratatui::{prelude::*, Frame};
@@ -138,8 +141,13 @@ impl MissionView {
                     }
                 }
                 KeyCode::Char('x') => {
-                    // cancel
-                    // todo: reprove execution
+                    match state.set_execution_fail().await {
+                        Ok(_) => {}
+                        Err(err) => {
+                            state.set_header_status(HeaderStatus::ErrorMessage(err.to_string()));
+                            return Ok(ShortcutHandlerResponse::StopPropagation);
+                        }
+                    };
                     state.set_screen(AppScreen::Mission);
                     state.set_focused_block(FocusedBlock::Home);
                     state.set_input_value(&FocusedBlock::Message, "");
@@ -194,6 +202,16 @@ impl MissionView {
                 Ok(ShortcutHandlerResponse::StopPropagation)
             }
             KeyCode::Char('u') => {
+                let current_branch = match get_last_commit_message(&state.project_dir) {
+                    Ok(current_branch) => current_branch,
+                    Err(_) => String::from(""),
+                };
+                if !current_branch.contains("execution-") {
+                    state.set_header_status(HeaderStatus::ErrorMessage(String::from(
+                        "last commit is not an execution",
+                    )));
+                    return Ok(ShortcutHandlerResponse::StopPropagation);
+                }
                 match git_undo_last_commit(&state.project_dir) {
                     Ok(_) => {
                         state.set_header_status(HeaderStatus::SuccessMessage(String::from(
@@ -215,6 +233,13 @@ impl MissionView {
         state: &mut AppState,
         generate_context: bool,
     ) -> Result<ShortcutHandlerResponse> {
+        state.set_header_status(HeaderStatus::LoadingMessage(String::from(
+            "Updating previous execution...",
+        )));
+        state.set_execution_fail().await.ok();
+        state.set_header_status(HeaderStatus::LoadingMessage(String::from(
+            "Preparing execution...",
+        )));
         let pathinfo = code_analyst::get_path_info(&state.project_dir).unwrap_or_default();
         let message = state.get_input_value_from_focused(FocusedBlock::Message);
         let mission_data = MissionData {
@@ -344,7 +369,9 @@ async fn _approve_and_run(state: &mut AppState) -> Result<()> {
             anyhow::bail!("No execution id found");
         }
     };
-    let req_approved = SetApprovedRequest { execution_id };
+    let req_approved = SetApprovedRequest {
+        execution_id: execution_id.clone(),
+    };
     match set_approved(req_approved).await {
         Ok(_) => {}
         Err(err) => {
@@ -352,7 +379,7 @@ async fn _approve_and_run(state: &mut AppState) -> Result<()> {
         }
     };
     coder::run_actions(&state.project_dir, &state.action_items.items.as_ref())?;
-    git_add_temporary_commit(&state.project_dir)?;
+    git_add_temporary_commit(&state.project_dir, Some(execution_id.clone()))?;
     Ok(())
 }
 
@@ -374,12 +401,15 @@ impl AppViewTrait for MissionView {
 
         // all components below should be rendered to the same position
         let content_position = "project_info";
-        if state.focused_block == FocusedBlock::Actions {
-            components.insert(String::from(content_position), el_action_preview.as_mutex());
-        } else {
-            let el_project_info = ProjectInfoComponent::new(state.project_dir.clone())?;
-            components.insert(String::from(content_position), el_project_info.as_mutex());
-        }
+        match state.focused_block {
+            FocusedBlock::Actions | FocusedBlock::ContextFiles => {
+                components.insert(String::from(content_position), el_action_preview.as_mutex());
+            }
+            _ => {
+                let el_project_info = ProjectInfoComponent::new(state.project_dir.clone())?;
+                components.insert(String::from(content_position), el_project_info.as_mutex());
+            }
+        };
 
         Ok(components)
     }
