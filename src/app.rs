@@ -22,7 +22,7 @@ use crate::{
     utils::list::SelectableList,
     views::{
         AddContextFilesView, AppView, CommitTempBranchView, CreateTempBranchView, MissionView,
-        SignInView,
+        SearchableListType, SignInView,
     },
 };
 
@@ -59,9 +59,11 @@ pub struct AppState {
     pub input_values: HashMap<String, String>,
     pub context_items: SelectableList<(String, String)>,
     pub action_items: SelectableList<MissionAction>,
+    pub searchable_list: SelectableList<(String, String)>,
     pub header_status: HeaderStatus,
     pub user_name: String,
     pub execution_id: Option<String>,
+    pub searchable_list_type: SearchableListType,
     // pub base_branch_name: String,
 }
 
@@ -127,9 +129,11 @@ impl AppState {
             header_status: HeaderStatus::default(),
             input_values: HashMap::new(),
             user_name,
-            context_items: SelectableList::new(vec![]),
-            action_items: SelectableList::new(vec![]),
+            context_items: SelectableList::new(None, vec![]),
+            action_items: SelectableList::new(None, vec![]),
+            searchable_list: SelectableList::new(None, vec![]),
             execution_id: None,
+            searchable_list_type: SearchableListType::ProjectFiles,
             // base_branch_name: current_branch_name,
         })
     }
@@ -165,6 +169,7 @@ impl AppState {
 
     pub fn set_context_items(&mut self, items: Vec<(&str, &str)>) {
         self.context_items = SelectableList::new(
+            None,
             items
                 .iter()
                 .map(|(name, content)| (name.to_string(), content.to_string()))
@@ -172,8 +177,17 @@ impl AppState {
         );
     }
 
+    pub fn set_searchable_list(
+        &mut self,
+        list: Vec<(String, String)>,
+        list_type: SearchableListType,
+    ) {
+        self.searchable_list = SelectableList::new(None, list);
+        self.searchable_list_type = list_type;
+    }
+
     pub fn set_action_items(&mut self, items: Vec<MissionAction>) {
-        self.action_items = SelectableList::new(items.clone());
+        self.action_items = SelectableList::new(None, items.clone());
         if items.len() > 0 {
             self.set_focused_block(FocusedBlock::Actions);
             self.action_items.select(Some(0));

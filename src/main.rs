@@ -30,6 +30,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         // otherwise the project_dir is the current dir that user called this program
         None => std::env::current_dir()?.to_str().unwrap().to_string(),
     };
+    let project_dir = project_dir.trim_end_matches('/').to_string();
     // create app and run it
     let state = Mutex::new(AppState::new(project_dir).await?);
     let mut app = App::new(state)?;

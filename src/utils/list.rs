@@ -35,12 +35,39 @@ impl SelectableItem for MissionAction {
     }
 }
 
-impl<T: SelectableItem> SelectableList<T> {
-    pub fn new(items: Vec<T>) -> Self {
+impl<T> SelectableList<T>
+where
+    T: SelectableItem + Clone,
+{
+    pub fn new(selected_index: Option<usize>, items: Vec<T>) -> Self {
+        let selected_index = match selected_index {
+            Some(index) => {
+                if index >= items.len() {
+                    None
+                } else {
+                    Some(index)
+                }
+            }
+            None => None,
+        };
         Self {
             items,
-            selected_index: Some(0),
+            selected_index,
         }
+    }
+
+    pub fn len(&self) -> usize {
+        self.items.len()
+    }
+
+    pub fn filter_and_collect(&self, callback: impl Fn(&T) -> bool) -> SelectableList<T> {
+        let items: Vec<T> = self
+            .items
+            .iter()
+            .filter(|item| callback(item))
+            .map(|item| item.to_owned())
+            .collect();
+        SelectableList::new(self.selected_index, items)
     }
 
     pub fn get_selected_item(&self) -> Option<&T> {
@@ -63,6 +90,10 @@ impl<T: SelectableItem> SelectableList<T> {
 
     pub fn add_item(&mut self, item: T) {
         self.items.push(item);
+    }
+
+    pub fn set_items(&mut self, items: Vec<T>) {
+        self.items = items;
     }
 
     pub fn remove_item_at(&mut self, index: usize) {
@@ -88,10 +119,6 @@ impl<T: SelectableItem> SelectableList<T> {
             }
             None => {}
         }
-    }
-
-    pub fn len(&self) -> u16 {
-        self.items.len() as u16
     }
 
     pub fn select_next(&mut self) {

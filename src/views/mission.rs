@@ -11,8 +11,8 @@ use lilicore::{
     },
     coder,
     git_repo::{
-        get_current_branch_name, get_last_commit_message, git_add_temporary_commit,
-        git_undo_last_commit,
+        get_current_branch_name, get_git_last_commits, get_last_commit_message,
+        git_add_temporary_commit, git_undo_last_commit,
     },
     io::LocalPath,
 };
@@ -33,7 +33,7 @@ use crate::{
     shortcuts::{handle_text_input_event, ShortcutHandlerResponse},
 };
 
-use super::AppViewTrait;
+use super::{AppViewTrait, SearchableListType};
 
 pub struct MissionView;
 
@@ -72,6 +72,35 @@ impl MissionView {
                     return Ok(ShortcutHandlerResponse::StopPropagation);
                 }
                 KeyCode::Char('p') => {
+                    let project_files = state.get_project_files().unwrap_or_default();
+                    let list: Vec<(String, String)> = project_files
+                        .iter()
+                        .map(|file_path| (file_path.clone(), String::from("")))
+                        .collect();
+                    // state.searchable_list.set_items(list);
+                    state.set_searchable_list(list, SearchableListType::ProjectFiles);
+                    state.set_screen(AppScreen::AddContextFiles);
+                    state.set_focused_block(FocusedBlock::SearchContextFileInput);
+                    return Ok(ShortcutHandlerResponse::StopPropagation);
+                }
+                KeyCode::Char('g') => {
+                    let gitlog = match get_git_last_commits(&state.project_dir) {
+                        Ok(gitlog) => gitlog,
+                        Err(err) => {
+                            state.set_header_status(HeaderStatus::ErrorMessage(err.to_string()));
+                            return Ok(ShortcutHandlerResponse::StopPropagation);
+                        }
+                    };
+                    let list: Vec<(String, String)> = gitlog
+                        .iter()
+                        .map(|commit| {
+                            (
+                                format!("{} {}", commit.hash, commit.message),
+                                String::from(""),
+                            )
+                        })
+                        .collect();
+                    state.set_searchable_list(list, SearchableListType::GitCommits);
                     state.set_screen(AppScreen::AddContextFiles);
                     state.set_focused_block(FocusedBlock::SearchContextFileInput);
                     return Ok(ShortcutHandlerResponse::StopPropagation);
