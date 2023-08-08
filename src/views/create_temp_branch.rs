@@ -2,7 +2,10 @@ use std::{collections::HashMap, sync::Mutex};
 
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};
-use lilicore::{git_repo::get_current_branch_name, shell::run_shell_command};
+use lilicore::{
+    git_repo::{get_current_branch_name, git_temporary_branch_create},
+    shell::run_shell_command,
+};
 use ratatui::{
     prelude::{Backend, Constraint, Layout, Rect},
     text::{Line, Span},
@@ -37,11 +40,14 @@ impl CreateTempBranchView {
     ) -> Result<ShortcutHandlerResponse> {
         match key.code {
             KeyCode::Enter => {
-                // todo: save current branch name in a config file
-                // state.set_screen(AppScreen::Mission);
-                // state.set_focused_block(FocusedBlock::Home);
-                // return Ok(ShortcutHandlerResponse::Mission);
-                match git_temporary_branch_create(state) {
+                // update current_branch in the state
+                let current_branch_name = get_current_branch_name(&state.project_dir)?;
+                if current_branch_name.clone().starts_with("temp-") {
+                    anyhow::bail!("You are already on a temporary branch");
+                }
+                state.set_base_branch_name(&current_branch_name)?;
+                // create temporary branch
+                match git_temporary_branch_create(&state.project_dir) {
                     Ok(output) => {
                         state.set_screen(AppScreen::Mission);
                         state.set_focused_block(FocusedBlock::Home);
@@ -67,32 +73,6 @@ impl CreateTempBranchView {
         }
         Ok(ShortcutHandlerResponse::StopPropagation)
     }
-}
-
-fn git_temporary_branch_create(state: &mut AppState) -> Result<String> {
-    let current_branch_name = get_current_branch_name(&state.project_dir)?;
-    if current_branch_name.clone().starts_with("temp-") {
-        anyhow::bail!("You are already on a temporary branch");
-    }
-    state.set_base_branch_name(&current_branch_name)?;
-    // let branch_name = "master";
-    let now_str = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)?
-        .as_secs()
-        .to_string();
-    let command = format!("git checkout -b temp-{}", now_str);
-    let project_dir = state.project_dir.clone();
-    let output = std::process::Command::new("git")
-        .arg("checkout")
-        .arg("-b")
-        .arg(format!("temp-{}", now_str))
-        .current_dir(project_dir)
-        .output()?;
-    if !output.status.clone().success() {
-        let error_message = String::from_utf8(output.stderr.clone())?;
-        anyhow::bail!(error_message);
-    }
-    Ok(String::from_utf8(output.stdout)?)
 }
 
 fn _run_shell_command(command: &str, project_dir: &str) -> Result<String> {

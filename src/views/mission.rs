@@ -212,6 +212,13 @@ impl MissionView {
                     )));
                     return Ok(ShortcutHandlerResponse::StopPropagation);
                 }
+                match state.set_execution_fail().await {
+                    Ok(_) => {}
+                    Err(err) => {
+                        state.set_header_status(HeaderStatus::ErrorMessage(err.to_string()));
+                        return Ok(ShortcutHandlerResponse::StopPropagation);
+                    }
+                };
                 match git_undo_last_commit(&state.project_dir) {
                     Ok(_) => {
                         state.set_header_status(HeaderStatus::SuccessMessage(String::from(

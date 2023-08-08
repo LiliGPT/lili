@@ -3,7 +3,9 @@ use std::{collections::HashMap, sync::Mutex};
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use lilicore::{
-    code_missions_api::MissionAction, configjson, git_repo::get_current_branch_name,
+    code_missions_api::MissionAction,
+    configjson,
+    git_repo::{get_current_branch_name, git_temporary_branch_create},
     shell::run_shell_command,
 };
 use ratatui::{
@@ -75,8 +77,13 @@ impl CommitTempBranchView {
                         state.set_input_value(&FocusedBlock::Message, "");
                         state.set_input_value(&FocusedBlock::CommitMessage, "");
                         // _replace_context_files_with_actions(state);
-                        state.set_context_items(vec![]);
-                        state.set_action_items(vec![]);
+                        // state.set_context_items(vec![]);
+                        // state.set_action_items(vec![]);
+                        let current_branch_name = get_current_branch_name(project_dir)?;
+                        // if it's not temporary
+                        if !current_branch_name.clone().starts_with("temp-") {
+                            git_temporary_branch_create(project_dir).ok();
+                        }
                         state.set_header_status(HeaderStatus::SuccessMessage(output));
                         return Ok(ShortcutHandlerResponse::Mission);
                     }
