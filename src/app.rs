@@ -5,9 +5,12 @@ use crossterm::event::{self, Event};
 use lilicore::{
     auth::{auth_introspect_token, KeycloakDecodedAccessToken},
     code_analyst::{self, project_files::get_project_files},
-    code_missions_api::{set_fail, MissionAction, MissionActionType, SetFailRequest},
+    code_missions_api::{
+        rate_limit_get, set_fail, MissionAction, MissionActionType, SetFailRequest,
+    },
     configjson, git_repo,
     io::LocalPath,
+    rate_limit::RateLimitMe,
 };
 use ratatui::{
     prelude::{Backend, Constraint, Direction, Layout},
@@ -64,6 +67,7 @@ pub struct AppState {
     pub user_name: String,
     pub execution_id: Option<String>,
     pub searchable_list_type: SearchableListType,
+    pub rate_limit: Option<RateLimitMe>,
     // pub base_branch_name: String,
 }
 
@@ -121,6 +125,7 @@ impl AppState {
                 }
             }
         }
+        let rate_limit = rate_limit_get().await.ok();
         Ok(Self {
             project_dir,
             screen,
@@ -134,6 +139,7 @@ impl AppState {
             searchable_list: SelectableList::new(None, vec![]),
             execution_id: None,
             searchable_list_type: SearchableListType::ProjectFiles,
+            rate_limit,
             // base_branch_name: current_branch_name,
         })
     }

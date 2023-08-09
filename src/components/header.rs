@@ -80,6 +80,14 @@ impl DrawableComponent for HeaderComponent {
             format!("{}", state.user_name),
             ratatui::style::Style::default().fg(ratatui::style::Color::DarkGray),
         ));
+        texts.push(Span::raw("        "));
+        texts.push(Span::raw("        "));
+        if let Some(rate_limit) = state.rate_limit.clone() {
+            texts.push(Span::styled(
+                format!("{}%", rate_limit.missions_perc),
+                ratatui::style::Style::default().fg(ratatui::style::Color::DarkGray),
+            ));
+        }
         let header = Paragraph::new(Line::from(texts))
             .block(Block::default().borders(Borders::NONE))
             .alignment(Alignment::Left);
