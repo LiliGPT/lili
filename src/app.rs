@@ -19,7 +19,7 @@ use crate::{
     components::{header::HeaderStatus, text_input::TextInputComponent},
     redraw_app,
     shortcuts::{handle_global_shortcuts, ShortcutHandlerResponse},
-    utils::list::SelectableList,
+    utils::{list::SelectableList, llm_tokens::llm_tokens_count_string},
     views::{
         AddContextFilesView, AppView, CommitTempBranchView, CreateTempBranchView, MissionView,
         SearchableListType, SignInView,

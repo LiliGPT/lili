@@ -60,10 +60,31 @@ impl DrawableComponent for ActionPreviewComponent {
         //     None => return Ok(()),
         // };
         let content = self.get_content(state);
+        let selected_title = match &state.focused_block {
+            &FocusedBlock::Actions => {
+                format!(
+                    "Action ( {} )",
+                    match state.action_items.get_selected_item() {
+                        Some(action) => action.path.clone(),
+                        None => String::from(""),
+                    }
+                )
+            }
+            &FocusedBlock::ContextFiles => {
+                format!(
+                    "Context File ( {} )",
+                    match state.context_items.get_selected_item() {
+                        Some(item) => item.0.clone(),
+                        None => String::from(""),
+                    }
+                )
+            }
+            _ => String::from("Empty Preview"),
+        };
 
         let block = ratatui::widgets::Block::default()
             .borders(ratatui::widgets::Borders::ALL)
-            .title("Action Preview");
+            .title(selected_title);
 
         let text = ratatui::widgets::Paragraph::new(content).block(block);
 

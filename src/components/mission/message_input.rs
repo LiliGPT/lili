@@ -37,7 +37,7 @@ impl DrawableComponent for MessageInputComponent {
         frame: &mut Frame<B>,
         rect: Rect,
     ) -> Result<()> {
-        let mut block = Block::default().borders(Borders::ALL).title("Message");
+        let mut block = Block::default().borders(Borders::TOP).title("Message");
 
         // let value = state
         //     .input_values

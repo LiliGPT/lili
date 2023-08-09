@@ -483,8 +483,8 @@ impl AppViewTrait for MissionView {
         let [left_top_rect, left_mid_rect, left_bottom_rect] = *Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Min(5),
-                Constraint::Length(5),
+                Constraint::Min(3),
+                Constraint::Length(7),
                 Constraint::Length(5),
             ].as_ref())
             .split(_left_rect)

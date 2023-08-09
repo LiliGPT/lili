@@ -43,10 +43,9 @@ impl DrawableComponent for ContextFilesComponent {
         rect: Rect,
     ) -> Result<()> {
         let items = state.context_items.to_items();
-
         let mut block = Block::default()
-            .borders(Borders::ALL)
-            .title("Context Files");
+            .borders(Borders::TOP)
+            .title(format!("Context Files ({})", items.len()));
 
         let mut list = ratatui::widgets::List::new(items);
 

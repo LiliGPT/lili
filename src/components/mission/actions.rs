@@ -34,7 +34,9 @@ impl DrawableComponent for ActionsComponent {
     ) -> Result<()> {
         let items = state.action_items.to_items();
 
-        let mut block = Block::default().borders(Borders::ALL).title("Actions");
+        let mut block = Block::default()
+            .borders(Borders::TOP)
+            .title(format!("Actions ({})", items.len()));
 
         let mut list = ratatui::widgets::List::new(items);
 
