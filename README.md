@@ -33,3 +33,22 @@ To remove the configuration directory:
 ```bash
 rm -rf ~/.lili
 ```
+
+## Supported Languages
+
+Lili Project supports these languages:
+
+- Node.js
+- Javascript
+- Rust
+- Lua
+
+## Getting Started
+
+In order to start using Lili, you need to create a project. Lili does not create
+any project for you, it just edit files inside a project.
+
+You can create any project you want than open lili running `lili` from the terminal.
+
+If you prefer you can also give lili a path, for example: `lili ~/my-project`.
+The path is optional.
