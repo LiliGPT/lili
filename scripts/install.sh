@@ -25,6 +25,14 @@ function main() {
     # Make the binary executable
     sudo chmod +x $DEST_DIR/lili
 
+    # Create configuration directory
+    sudo mkdir -p $HOME/.lili
+
+    # Change owner of configuration directory and binary
+    local CURRENT_USER=$(whoami)
+    local CURRENT_GROUP=$(id -gn $CURRENT_USER)
+    sudo chown -R $CURRENT_USER:$CURRENT_GROUP $DEST_DIR/lili $HOME/.lili
+
     # Clean up
     rm -rf $TEMP_DIR
 
