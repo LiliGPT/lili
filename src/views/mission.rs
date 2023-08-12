@@ -231,11 +231,16 @@ impl MissionView {
                 Ok(ShortcutHandlerResponse::StopPropagation)
             }
             KeyCode::Char('u') => {
-                let current_branch = match get_last_commit_message(&state.project_dir) {
-                    Ok(current_branch) => current_branch,
-                    Err(_) => String::from(""),
+                let commit_message = match get_last_commit_message(&state.project_dir) {
+                    Ok(commit_message) => commit_message,
+                    Err(_) => {
+                        state.set_header_status(HeaderStatus::ErrorMessage(String::from(
+                            "no commits found",
+                        )));
+                        return Ok(ShortcutHandlerResponse::StopPropagation);
+                    }
                 };
-                if !current_branch.contains("execution-") {
+                if !commit_message.contains("execution-") {
                     state.set_header_status(HeaderStatus::ErrorMessage(String::from(
                         "last commit is not an execution",
                     )));
@@ -243,9 +248,9 @@ impl MissionView {
                 }
                 match state.set_execution_fail().await {
                     Ok(_) => {}
-                    Err(err) => {
-                        state.set_header_status(HeaderStatus::ErrorMessage(err.to_string()));
-                        return Ok(ShortcutHandlerResponse::StopPropagation);
+                    Err(_err) => {
+                        // state.set_header_status(HeaderStatus::ErrorMessage(err.to_string()));
+                        // return Ok(ShortcutHandlerResponse::StopPropagation);
                     }
                 };
                 match git_undo_last_commit(&state.project_dir) {
