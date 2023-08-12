@@ -1,6 +1,6 @@
 use anyhow::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
-use lilicore::shell::run_shell_command;
+use lilicore::{git_repo::get_current_branch_name, shell::run_shell_command};
 
 use crate::{
     app::{AppScreen, AppState, FocusedBlock},
@@ -59,6 +59,13 @@ pub fn handle_global_shortcuts(
 
     if let KeyCode::Char('.') = key.code {
         let base_branch_name = state.get_base_branch_name();
+        let current_branch_name = get_current_branch_name(&state.project_dir)?;
+        if current_branch_name.starts_with("temp-") && base_branch_name.is_none() {
+            state.set_header_status(HeaderStatus::ErrorMessage(
+                "Could not find base branch name".to_string(),
+            ));
+            return Ok(ShortcutHandlerResponse::StopPropagation);
+        }
         if base_branch_name.is_none() {
             // state.set_header_status(HeaderStatus::ErrorMessage(
             //     "Could not find base branch name".to_string(),
