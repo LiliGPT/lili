@@ -14,13 +14,6 @@ rather than generating code based on the current cursor position.
 curl -s https://raw.githubusercontent.com/LiliGPT/lili/main/scripts/install.sh | bash
 ```
 
-### Windows
-
-Installation in Windows is still experimental, please open an issue if you have 
-any problems.
-
-[Download the Windows Installer](https://github.com/LiliGPT/lili/releases/download/v0.0.1/liliv0.0.1.exe)
-
 ## Complete Uninstall
 
 ### Ubuntu / Debian
@@ -40,16 +33,6 @@ To remove the configuration directory:
 ```bash
 rm -rf ~/.lili
 ```
-
-### Windows
-
-Go to Uninstall Programs in Windows and remove the program.
-
-This is not working properly for now, so you can delete the directory manually 
-**after uninstalling**.
-
-* Remove the directory (defaults to `C:\Program Files (x86)\Lili`).
-* Remove the Path variable that points to Lili
 
 ## Supported Languages
 
