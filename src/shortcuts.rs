@@ -1,5 +1,5 @@
 use anyhow::Result;
-use crossterm::event::{self, Event, KeyCode, KeyEvent};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use lilicore::{git_repo::get_current_branch_name, shell::run_shell_command};
 
 use crate::{
@@ -20,6 +20,11 @@ pub fn handle_global_shortcuts(
     state: &mut AppState,
     key: &KeyEvent,
 ) -> Result<ShortcutHandlerResponse> {
+    // if event is a key release, ignore it
+    if key.kind == KeyEventKind::Release {
+        return Ok(ShortcutHandlerResponse::Continue);
+    }
+
     if let KeyCode::Esc = key.code {
         state.set_focused_block(FocusedBlock::Home);
         state.set_header_status(HeaderStatus::Idle);
@@ -38,12 +43,21 @@ pub fn handle_global_shortcuts(
     }
 
     if let KeyCode::Char('L') = key.code {
-        // todo: open browser cross platform
-        let register_url = format!(
-            "start https://liligpt-auth.giovannefeitosa.com/auth/realms/liligpt/protocol/openid-connect/registrations?{}",
-            "client_id=liligpt_backend\"&\"response_type=code\"&\"redirect_uri=https%3A%2F%2Fwww.google.com\"&\"kc_locale=br",
-        );
-        open::with(register_url, "powershell.exe")?;
+        if cfg!(windows) {
+            let register_url = format!(
+                "https://liligpt-auth.giovannefeitosa.com/auth/realms/liligpt/protocol/openid-connect/registrations?{}",
+                "client_id=liligpt_backend&response_type=code&redirect_uri=https%3A%2F%2Fwww.google.com&kc_locale=br",
+            );
+            open::that(register_url)?;
+        } else if cfg!(unix) {
+            // this works in wsl
+            // todo: test in linux and mac
+            let register_url = format!(
+                "start https://liligpt-auth.giovannefeitosa.com/auth/realms/liligpt/protocol/openid-connect/registrations?{}",
+                "client_id=liligpt_backend\"&\"response_type=code\"&\"redirect_uri=https%3A%2F%2Fwww.google.com\"&\"kc_locale=br",
+            );
+            open::with(register_url, "powershell.exe")?;
+        }
         state.set_screen(AppScreen::SignIn);
         state.set_focused_block(FocusedBlock::UsernameInput);
         state.set_header_status(HeaderStatus::Idle);

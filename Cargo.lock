@@ -702,6 +702,7 @@ dependencies = [
  "git2",
  "ignore",
  "jsonwebtoken",
+ "open",
  "regex",
  "reqwest",
  "serde",
