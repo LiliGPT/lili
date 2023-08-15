@@ -1,6 +1,6 @@
 use crate::{app::AppState, components::AppComponent, shortcuts::ShortcutHandlerResponse};
 use anyhow::Result;
-use crossterm::event::{self, Event, KeyEvent};
+use crossterm::event::{self, Event, KeyEvent, KeyEventKind};
 use ratatui::{
     prelude::{Backend, Rect},
     Frame,
@@ -69,6 +69,10 @@ impl AppView {
         state: &mut AppState,
         key: &KeyEvent,
     ) -> Result<ShortcutHandlerResponse> {
+        // if event is a key release, ignore it
+        if &key.kind == &KeyEventKind::Release {
+            return Ok(ShortcutHandlerResponse::Continue);
+        }
         return match self {
             AppView::Mission(view) => view.handle_events(state, &key).await,
             AppView::SignIn(view) => view.handle_events(state, &key).await,
